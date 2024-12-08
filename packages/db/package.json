@@ -1,8 +1,8 @@
 {
-  "name": "http",
+  "name": "@repo/db",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/express": "^5.0.0",
-    "express": "^4.21.2",
-    "@repo/db" : "*"
+    "@prisma/client": "^6.0.1",
+    "prisma": "^6.0.1"
+  },
+  "exports": {
+    "./client": "./src/index.ts"
   }
 }
