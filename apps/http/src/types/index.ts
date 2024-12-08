@@ -7,7 +7,7 @@ export const SignUpSchema = z.object({
 })
 
 export const SignInSchema = z.object({
-    email: z.string().email(),
+    username: z.string().email(),
     password: z.string().min(8)
 })
 
@@ -53,6 +53,7 @@ export const CreateMapSchema = z.object({
         y : z.number()
     }))
 })
+
 
 
 
