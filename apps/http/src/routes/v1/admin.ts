@@ -1,12 +1,14 @@
 import { Router } from "express";
+import { CreateElementSchema, UpdateElementSchema } from "../../types";
+import { AdminMiddleware } from "../../middleware/admin";
+import client from "@repo/db";
+import { ParseStatus } from "zod";
 
 export const adminRouter = Router();
 
-adminRouter.post("/element",(req,res) => {
+adminRouter.use(AdminMiddleware);
 
-})
-
-adminRouter.put("/element/:elementId",(req,res) => {
+adminRouter.post("/element", async (req,res) => {
     
 })
 

@@ -28,10 +28,10 @@ model Space {
   name      String
   width     Int
   height    Int
-  thumbnail String
+  thumbnail String?
   creatorId   String
   creator     User    @relation(fields: [creatorId],references: [id])
-  elements   spaceElements[]
+  spaceElements   spaceElements[]
 }
 
 model spaceElements {
@@ -59,7 +59,7 @@ model Map {
   width  Int
   height Int
   name   String
-  elements  mapElements[]
+  mapElements  mapElements[]
 }
 
 model mapElements {
