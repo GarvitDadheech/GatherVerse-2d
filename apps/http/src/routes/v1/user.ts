@@ -12,7 +12,7 @@ userRouter.post("/signup", async (req,res) => {
     const parsedData = SignUpSchema.safeParse(req.body);
     
     if(!parsedData.success) {
-        res.status(403).json({
+        res.status(401).json({
             message : "Invalid Data Recieved",
             errors : parsedData.error.issues
         })
@@ -44,7 +44,7 @@ userRouter.post("signin",async (req,res) => {
     const parsedData = SignInSchema.safeParse(req.body);
 
     if(!parsedData.success) {
-        res.status(403).json({
+        res.status(401).json({
             message : "Invalid Data Recieved",
             errors : parsedData.error.issues
         })
@@ -59,7 +59,7 @@ userRouter.post("signin",async (req,res) => {
         })
 
         if(!user) {
-            res.status(403).json({
+            res.status(401).json({
                 message : "User doesn't Exists!"
             })
             return
@@ -68,7 +68,7 @@ userRouter.post("signin",async (req,res) => {
         const isValid = await compare(parsedData.data.password,user.password);
 
         if(!isValid) {
-            res.status(403).json({
+            res.status(401).json({
                 message: "Wrong credentials!"
             })
             return
@@ -96,7 +96,7 @@ userRouter.post("/metadata", UserMiddleware,async (req,res) => {
     const parsedData = UpdateMetadataSchema.safeParse(req.body);
 
     if(!parsedData.success) {
-        res.status(403).json({
+        res.status(401).json({
             message : "Invalid Data Recieved",
             errors : parsedData.error.issues
         })

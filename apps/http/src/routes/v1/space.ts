@@ -118,7 +118,7 @@ spaceRouter.delete("/:spaceId",UserMiddleware,async (req,res) => {
         }
 
         if(space.creatorId !== req.userId) {
-            res.status(403).json({
+            res.status(401).json({
                 message : "Unauthorized!"
             })
             return;
@@ -196,7 +196,7 @@ spaceRouter.get("/:spaceId",UserMiddleware,async (req,res) => {
         }
 
         if(space.creatorId !== req.userId) {
-            res.status(403).json({
+            res.status(401).json({
                 message : "Unauthorized!"
             })
             return;
@@ -251,7 +251,7 @@ spaceRouter.post("/element",UserMiddleware,async (req,res) => {
         }
 
         if(space.creatorId !== req.userId) {
-            res.status(403).json({
+            res.status(401).json({
                 message : "Unauthorized!"
             })
             return;
@@ -320,7 +320,7 @@ spaceRouter.delete("/element",async (req,res) => {
         }
 
         if(spaceElement.space.creatorId !== req.userId) {
-            res.status(403).json({
+            res.status(401).json({
                 message : "Unauthorized!"
             })
             return;

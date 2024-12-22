@@ -6,7 +6,7 @@ export const UserMiddleware = (req : Request,res : Response,next : NextFunction)
     const headers = req.headers.authorization;
 
     if(!headers) {
-        res.status(403).json({
+        res.status(401).json({
             message : "No Authorization Header Found"
         })
         return
@@ -15,7 +15,7 @@ export const UserMiddleware = (req : Request,res : Response,next : NextFunction)
     const token = headers.split(" ")[1];
 
     if(!token) {
-        res.status(403).json({
+        res.status(401).json({
             message : "No Token Found"
         })
         return
@@ -27,7 +27,7 @@ export const UserMiddleware = (req : Request,res : Response,next : NextFunction)
         next();
     }
     catch(e) {
-        res.status(403).json({
+        res.status(401).json({
             message : "Invalid Token"
         })
     }
