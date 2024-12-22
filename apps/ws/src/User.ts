@@ -14,6 +14,7 @@ export class User {
 
     constructor(private ws: WebSocket) {
         this.id = generateCustomId();
+        this.initHandlers();
     }
 
     initHandlers() {
