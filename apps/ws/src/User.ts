@@ -4,6 +4,7 @@ import { OutgoingMessage } from "./types";
 import { RoomManager } from "./RoomManager";
 import { getSpawnPosition } from "./utils/spawnPosition";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { JWT_SECRET } from "@repo/config";
 export class User {
     public id: string;
     public userId?: string;
@@ -32,7 +33,7 @@ export class User {
                             })
                             return;
                         }
-                        const userId = (jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload).userId;
+                        const userId = (jwt.verify(token, JWT_SECRET) as JwtPayload).userId;
                         if(!userId) {
                             this.send({
                                 type: "error",

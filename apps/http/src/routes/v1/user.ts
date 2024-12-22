@@ -3,7 +3,7 @@ import { SignInSchema, SignUpSchema, UpdateMetadataSchema } from "../../types";
 import client from "@repo/db";
 import {hash,compare} from "../../scrypt";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../config";
+import { JWT_SECRET } from "@repo/config";
 import { UserMiddleware } from "../../middleware/user";
 
 export const userRouter = Router();

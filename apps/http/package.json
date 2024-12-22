@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@repo/db": "*",
+    "@repo/config": "*",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "dotenv": "^16.4.7",
