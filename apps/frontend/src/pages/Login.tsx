@@ -8,6 +8,7 @@ import { InputBox } from "../components/InputBox";
 import { Modal } from "../components/Modal";
 import { AvatarSelectionModal } from "../components/AvatarSelection";
 import { useNavigate } from "react-router-dom";
+import CreateRoomModal from "./CreateRoomModal";
 
 
 interface Avatar {
@@ -35,9 +36,6 @@ const UserOnboarding = () => {
   const navigate = useNavigate();
   // Room Creation States
   const [showCreateRoom, setShowCreateRoom] = useState(false);
-  const [roomName, setRoomName] = useState("");
-  const [description, setDescription] = useState("");
-  const [password, setPassword] = useState("");
 
   const GenderButton: React.FC<GenderButtonProps> = ({ 
     value, 
@@ -158,61 +156,31 @@ const UserOnboarding = () => {
   );
 
   const renderCreateRoomForm = () => (
-    <div className="space-y-4">
-      <div 
-        onClick={() => setShowCreateRoom(false)} 
-        className="flex items-center text-gray-400 hover:text-white cursor-pointer mb-4 font-['Comic_Sans_MS']"
-      >
-        ← Back
-      </div>
-      
-      <InputBox
-        placeholder="Room Name"
-        value={roomName}
-        onChange={(e) => setRoomName(e.target.value)}
-        className="font-['Comic_Sans_MS']"
-      />
-      
-      <textarea
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="w-full px-6 py-4 bg-[#2a3441] rounded-2xl border-2 border-[#374151] 
-          focus:border-[#4fd1c5] focus:outline-none text-white placeholder-gray-400 min-h-[100px] font-['Comic_Sans_MS']"
-      />
-      
-      <InputBox
-        type="password"
-        placeholder="Password (optional)"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="font-['Comic_Sans_MS']"
-      />
-      
-      <Button 
-        className="w-full font-['Comic_Sans_MS']"
-        onClick={() => {/* Add your room creation logic */}}
-      >
-        CREATE ROOM
-      </Button>
-    </div>
+    <CreateRoomModal
+      onClose={() => setShowCreateRoom(false)}
+      onCreateRoom={(roomDetails) => {
+        // Handle room creation logic here
+        console.log("Room created:", roomDetails);
+        setShowCreateRoom(false);
+      }}
+    />
   );
 
   return (
     <Background>
-      <Modal
+      {!showCreateRoom && <Modal
         title={
           <>
             <h1 className="text-3xl font-bold text-white mb-2 font-['Comic_Sans_MS']">
-              {showCreateRoom ? "Create Your Room ✨" : "Welcome to the Game! 🎮"}
+              {showCreateRoom ? "" : "Welcome to the Game! 🎮"}
             </h1>
             <p className="text-[#4fd1c5] font-['Comic_Sans_MS']">
-              {showCreateRoom ? "Design your perfect space!" : "Set up your profile to begin!"}
+              {showCreateRoom ? "" : "Set up your profile to begin!"}
             </p>
           </>
         }
       >
-        {showCreateRoom ? renderCreateRoomForm() : renderUserProfileForm()}
+        {!showCreateRoom && renderUserProfileForm()}
         
         {showAvatarModal && (
           <AvatarSelectionModal
@@ -223,7 +191,8 @@ const UserOnboarding = () => {
             }}
           />
         )}
-      </Modal>
+      </Modal>}
+      {showCreateRoom && renderCreateRoomForm()}
     </Background>
   );
 };
