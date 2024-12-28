@@ -14,6 +14,7 @@ model User {
   avatarId      String
   avatar        Avatar        @relation(fields: [avatarId], references: [id])
   gender        Gender
+  role          Role          @default(User)
   currentRoomId String?
   currentRoom   Room?         @relation(fields: [currentRoomId], references: [id])
   createdAt     DateTime      @default(now())
@@ -48,7 +49,7 @@ model Map {
   width       Int
   height      Int
   thumbnail   String?
-  elements    MapElement[]
+  mapElements MapElement[]
   rooms       Room[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -82,4 +83,9 @@ model MapElement {
 enum Gender {
   Male
   Female
+}
+
+enum Role {
+  Admin
+  User
 }
