@@ -36,9 +36,10 @@ model Room {
   name          String
   description   String?
   mapId         String
+  maxUsers      Int?       @default(20)
+  thumbnail     String?
   map           Map       @relation(fields: [mapId], references: [id])
   currentUsers  User[]
-  maxUsers      Int       @default(20)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -48,7 +49,7 @@ model Map {
   name        String
   width       Int
   height      Int
-  thumbnail   String?
+  thumbnail   String
   mapElements MapElement[]
   rooms       Room[]
   createdAt   DateTime  @default(now())

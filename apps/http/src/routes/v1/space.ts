@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { AddElementSchema, CreateSpaceSchema, DeleteElementSchema } from "../../types";
 import client from "@repo/db";
-import { UserMiddleware } from "../../middleware/user";
 export const spaceRouter = Router();
 
-spaceRouter.post("/", UserMiddleware ,async (req,res) => {
+spaceRouter.post("/",async (req,res) => {
     const parsedData = CreateSpaceSchema.safeParse(req.body);
 
     if(!parsedData.success) {
