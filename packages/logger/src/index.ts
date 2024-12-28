@@ -19,12 +19,18 @@ const colors = {
 winston.addColors(colors);
 
 const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:ms" }),
-  winston.format.colorize({ all: true }),
-  winston.format.printf(
-    (info) => `${info.timestamp} ${info.level}: ${info.message}`
-  )
-);
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.printf((info) => {
+      const colorizer = winston.format.colorize().colorize.bind(winston.format.colorize());
+      return colorizer(
+        info.level,
+        `--${info.level.toUpperCase()}-- ${info.timestamp} ${info.message}`
+      );
+    })
+  );
+  
+  
+  
 
 class Logger {
   private static instance: Logger;
@@ -73,4 +79,4 @@ class Logger {
   }
 }
 
-export default Logger.getInstance();
+export default Logger.getInstance() as Logger;
