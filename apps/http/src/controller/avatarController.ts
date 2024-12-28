@@ -18,10 +18,18 @@ export const createAvatarController = async (req: Request, res: Response) => {
     res.json({
       avatarId: avatar.id,
     });
-
   } catch (e) {
     res.status(400).json({
       message: "Internal Server Error!",
     });
+  }
+};
+
+export const getAvatarsController = async (req: Request, res: Response) => {
+  try {
+    const avatars = await avatarService.getAvatars();
+    res.json({ avatars });
+  } catch (e) {
+    throw new Error("Failed to fetch avatars");
   }
 };

@@ -3,7 +3,6 @@ import { AdminMiddleware } from "../../middleware/admin";
 import { createAvatarController } from "../../controller/avatarController";
 import { createMapController } from "../../controller/mapController";
 
-
 export const adminRouter = Router();
 
 adminRouter.use(AdminMiddleware);

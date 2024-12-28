@@ -16,6 +16,19 @@ class AvatarService {
       throw new Error("Error creating avatar");
     }
   }
+
+  async getAvatars() {
+    try {
+      const avatars = await client.avatar.findMany();
+      return avatars.map((avatar) => ({
+        id: avatar.id,
+        imageUrl: avatar.imageUrl,
+        name: avatar.name,
+      }));
+    } catch (e) {
+      throw new Error("Internal Server Error");
+    }
+  }
 }
 
 export const avatarService = new AvatarService();
