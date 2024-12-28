@@ -29,6 +29,22 @@ class AvatarService {
       throw new Error("Internal Server Error");
     }
   }
+
+  async getAvatarById(avatarId: string) {
+    try {
+      const avatar = await client.avatar.findUnique({
+        where: { id: avatarId },
+      });
+
+      if (!avatar) {
+        throw new Error("Invalid Avatar Id");
+      }
+
+      return avatar;
+    } catch (e) {
+      throw new Error("Internal Server Error");
+    }
+  }
 }
 
 export const avatarService = new AvatarService();

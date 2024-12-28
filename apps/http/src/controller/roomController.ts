@@ -1,9 +1,5 @@
 import { Request, Response } from "express";
-import {
-  CreateRoomSchema,
-  DeleteRoomSchema,
-  GetRoomsByIdSchema,
-} from "../types/roomType";
+import { CreateRoomSchema } from "../types/roomType";
 import { roomService } from "../service/roomService";
 
 export const createRoomController = async (req: Request, res: Response) => {
@@ -28,15 +24,15 @@ export const createRoomController = async (req: Request, res: Response) => {
 };
 
 export const deleteRoomController = async (req: Request, res: Response) => {
-  const parsedData = DeleteRoomSchema.safeParse(req.body);
-  if (!parsedData.success) {
+  const roomId = req.params.id;
+  if (!roomId) {
     res.status(400).json({
       message: "Invalid Data Received!",
     });
     return;
   }
   try {
-    await roomService.deleteRoom(parsedData.data);
+    await roomService.deleteRoom(roomId);
     res.json({
       message: "Room Deleted!",
     });
@@ -59,15 +55,15 @@ export const getAllRoomsController = async (req: Request, res: Response) => {
 };
 
 export const getRoomByIdController = async (req: Request, res: Response) => {
-  const parsedData = GetRoomsByIdSchema.safeParse(req.params);
-  if (!parsedData.success) {
+  const roomId = req.params.id;
+  if (!roomId) {
     res.status(400).json({
       message: "Invalid Data Received!",
     });
     return;
   }
   try {
-    const roomData = await roomService.getRoomById(parsedData.data);
+    const roomData = await roomService.getRoomById(roomId);
     res.json(roomData);
   } catch (e) {
     res.status(400).json({

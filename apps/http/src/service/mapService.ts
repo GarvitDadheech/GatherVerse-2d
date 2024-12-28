@@ -2,7 +2,6 @@ import { CreateMapData } from "../types/mapType";
 import client from "@repo/db";
 
 class MapService {
-    
   async createMap(mapData: CreateMapData) {
     try {
       const map = await client.map.create({

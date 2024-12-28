@@ -1,5 +1,5 @@
 import client from "@repo/db";
-import { CreateRoomData, DeleteRoomData, GetRoomsByIdData } from "../types/roomType";
+import { CreateRoomData } from "../types/roomType";
 
 class RoomService {
   async createRoom(data: CreateRoomData) {
@@ -16,9 +16,8 @@ class RoomService {
     }
   }
 
-  async deleteRoom(data: DeleteRoomData) {
+  async deleteRoom(roomId: string) {
     try {
-      const roomId = data.roomId;
       const room = await client.room.findUnique({
         where: { id: roomId },
       });
@@ -46,8 +45,7 @@ class RoomService {
     }));
   }
 
-  async getRoomById(data : GetRoomsByIdData) {
-    const roomId = data.roomId;
+  async getRoomById(roomId: string) {
     const room = await client.room.findUnique({
       where: { id: roomId },
     });
@@ -69,8 +67,8 @@ class RoomService {
       },
     });
 
-    if(!map) {
-        throw new Error("Invalid Map Id");
+    if (!map) {
+      throw new Error("Invalid Map Id");
     }
 
     return {
