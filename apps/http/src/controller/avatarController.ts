@@ -1,4 +1,3 @@
-import client from "@repo/db";
 import { CreateAvatarSchema } from "../types/avatarType";
 import { Request, Response } from "express";
 import { avatarService } from "../service/avatarService";

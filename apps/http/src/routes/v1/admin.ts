@@ -10,5 +10,5 @@ export const adminRouter = Router();
 adminRouter.use(AdminMiddleware);
 adminRouter.post("/avatar", createAvatarController);
 adminRouter.post("/map", createMapController);
-adminRouter.delete("/room", deleteRoomController);
+adminRouter.delete("/:roomId", deleteRoomController);
 adminRouter.delete("/user/:userId", deleteUserController);

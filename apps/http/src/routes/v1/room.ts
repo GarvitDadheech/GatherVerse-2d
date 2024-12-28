@@ -5,10 +5,10 @@ import {
   getAllRoomsController,
   getRoomByIdController,
 } from "../../controller/roomController";
+import { userMiddleware } from "../../middleware/user";
 
 export const roomRouter = Router();
 
-roomRouter.post("/", createRoomController);
-roomRouter.delete("/:roomId", deleteRoomController);
+roomRouter.post("/", userMiddleware ,createRoomController);
 roomRouter.get("/all", getAllRoomsController);
 roomRouter.get("/:roomId", getRoomByIdController);

@@ -4,6 +4,8 @@ import {
   OnboardUserData,
   UpdateMetadataData,
 } from "../types/userType";
+import { JWT_SECRET } from "@repo/config";
+import jwt from "jsonwebtoken";
 
 export class UserService {
   async onboardUser(data: OnboardUserData) {
@@ -18,7 +20,12 @@ export class UserService {
           avatarId,
         },
       });
-      return user;
+
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
+        expiresIn: "12h",
+      });
+
+      return token;
     } catch (e) {
       throw new Error("Failed to onboard user!");
     }

@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { JWT_SECRET, ADMIN_PASSWORD } from "@repo/config";
-import jwt from "jsonwebtoken";
+import { ADMIN_PASSWORD } from "@repo/config";
 
 export const AdminMiddleware = (
   req: Request,

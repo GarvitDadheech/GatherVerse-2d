@@ -15,9 +15,9 @@ export const onboardUserController = async (req: Request, res: Response) => {
     return;
   }
   try {
-    const user = await userService.onboardUser(parsedData.data);
+    const token = await userService.onboardUser(parsedData.data);
     res.json({
-      userId: user.id,
+      token,
     });
   } catch (e) {
     res.status(500).json({
