@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { X, Upload } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@repo/ui/Button";
 import { InputBox } from "@repo/ui/InpuBox";
-import { Modal } from "@repo/ui/Modal";
+
+import { ImageUpload } from "../components/onboarding/ImageUpload";
+import BubbleAnimation from "../components/BubbleAnimation";
 
 interface Map {
   id: string;
@@ -12,8 +14,8 @@ interface Map {
 }
 
 interface CreateRoomModalProps {
-  onClose: () => void;
   onCreateRoom: (roomData: RoomData) => void;
+  onBack: () => void;
 }
 
 interface RoomData {
@@ -23,29 +25,29 @@ interface RoomData {
   thumbnailUrl: string;
 }
 
-const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreateRoom }) => {
+const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
+  onCreateRoom,
+  onBack,
+}) => {
   const [roomName, setRoomName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedMap, setSelectedMap] = useState<Map | null>(null);
   const [showMapSelection, setShowMapSelection] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
 
-  // Mock maps data - replace with your actual maps
   const maps: Map[] = [
     {
       id: "1",
       name: "Forest Haven",
       thumbnailUrl: "/maps/forest.jpg",
-      description: "A peaceful forest setting with ambient sounds"
+      description: "A peaceful forest setting with ambient sounds",
     },
     {
       id: "2",
       name: "Cyber City",
       thumbnailUrl: "/maps/cyber.jpg",
-      description: "Futuristic cityscape with neon lights"
+      description: "Futuristic cityscape with neon lights",
     },
-    // Add more maps
   ];
 
   const handleCreateRoom = () => {
@@ -53,7 +55,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreateRoom
       name: roomName,
       description,
       selectedMap,
-      thumbnailUrl
+      thumbnailUrl,
     });
   };
 
@@ -81,9 +83,11 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreateRoom
                 setShowMapSelection(false);
               }}
               className={`p-4 rounded-xl border-2 transition-all duration-300 text-left
-                ${selectedMap?.id === map.id 
-                  ? 'border-[#4fd1c5] bg-[#2a3441]' 
-                  : 'border-[#374151] hover:border-[#4fd1c5]'}`}
+                ${
+                  selectedMap?.id === map.id
+                    ? "border-[#4fd1c5] bg-[#2a3441]"
+                    : "border-[#374151] hover:border-[#4fd1c5]"
+                }`}
             >
               <img
                 src={map.thumbnailUrl}
@@ -104,106 +108,144 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreateRoom
   );
 
   return (
-    <Modal
-      title={
-        <h1 className="text-3xl font-bold text-white mb-2 font-['Comic_Sans_MS']">
-          Create Your Room ✨
-        </h1>
-      }
-    >
-      <div className="space-y-6">
-        <InputBox
-          placeholder="Room Name"
-          value={roomName}
-          onChange={(e) => setRoomName(e.target.value)}
-          className="font-['Comic_Sans_MS']"
-        />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-[#1f2937] rounded-2xl max-w-5xl w-full mx-4 h-[90vh] flex overflow-hidden">
+        {/* Left Panel - Form */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="relative mb-6">
+            <button
+              onClick={onBack}
+              className="absolute -left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h1 className="text-3xl font-bold text-white font-['Comic_Sans_MS'] pl-8">
+              Create Your Room ✨
+            </h1>
+          </div>
 
-        <textarea
-          placeholder="Room Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-6 py-4 bg-[#2a3441] rounded-2xl border-2 border-[#374151] 
-            focus:border-[#4fd1c5] focus:outline-none text-white placeholder-gray-400 
-            min-h-[100px] font-['Comic_Sans_MS']"
-        />
+          <div className="space-y-4">
+            <InputBox
+              placeholder="Room Name"
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              className="font-['Comic_Sans_MS']"
+            />
 
-        {/* Map Selection */}
-        <div className="space-y-4">
-          {selectedMap ? (
-            <div className="p-4 bg-[#2a3441] rounded-xl border-2 border-[#4fd1c5]">
-              <div className="flex items-start gap-4">
-                <img
-                  src={selectedMap.thumbnailUrl}
-                  alt={selectedMap.name}
-                  className="w-24 h-24 rounded-lg object-cover"
-                />
-                <div className="flex-1">
-                  <h3 className="text-white font-['Comic_Sans_MS'] mb-1">
-                    {selectedMap.name}
-                  </h3>
-                  <p className="text-gray-400 font-['Comic_Sans_MS'] text-sm mb-2">
-                    {selectedMap.description}
-                  </p>
-                  <button
-                    onClick={() => setShowMapSelection(true)}
-                    className="text-[#4fd1c5] hover:text-[#45b8ae] font-['Comic_Sans_MS'] text-sm"
-                  >
-                    Change Map
-                  </button>
+            <textarea
+              placeholder="Room Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-6 py-4 bg-[#2a3441] rounded-2xl border-2 border-[#374151] 
+                focus:border-[#4fd1c5] focus:outline-none text-white placeholder-gray-400 
+                h-24 font-['Comic_Sans_MS'] resize-none"
+            />
+
+            {/* Map Selection */}
+            <div>
+              {selectedMap ? (
+                <div className="p-4 bg-[#2a3441] rounded-xl border-2 border-[#4fd1c5]">
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={selectedMap.thumbnailUrl}
+                      alt={selectedMap.name}
+                      className="w-20 h-20 rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <h3 className="text-white font-['Comic_Sans_MS'] mb-1">
+                        {selectedMap.name}
+                      </h3>
+                      <p className="text-gray-400 font-['Comic_Sans_MS'] text-sm mb-2">
+                        {selectedMap.description}
+                      </p>
+                      <button
+                        onClick={() => setShowMapSelection(true)}
+                        className="text-[#4fd1c5] hover:text-[#45b8ae] font-['Comic_Sans_MS'] text-sm"
+                      >
+                        Change Map
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowMapSelection(true)}
+                  className="w-full font-['Comic_Sans_MS']"
+                >
+                  Choose a Map
+                </Button>
+              )}
             </div>
-          ) : (
+
+            {/* Room Thumbnail Upload */}
+            <div className="space-y-2">
+              <label className="text-gray-400 font-['Comic_Sans_MS'] text-sm">
+                Room Thumbnail (Optional)
+              </label>
+              <ImageUpload
+                value={thumbnailUrl}
+                onImageSelect={setThumbnailUrl}
+              />
+            </div>
+
             <Button
-              variant="secondary"
-              onClick={() => setShowMapSelection(true)}
+              onClick={handleCreateRoom}
               className="w-full font-['Comic_Sans_MS']"
             >
-              Choose a Map
-            </Button>
-          )}
-        </div>
-
-        {/* Room Thumbnail */}
-        <div className="space-y-2">
-          <label className="text-gray-400 font-['Comic_Sans_MS'] text-sm">
-            Room Thumbnail (Optional)
-          </label>
-          <div className="flex gap-4">
-            <InputBox
-              placeholder="Image URL"
-              value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
-              className="font-['Comic_Sans_MS'] flex-1"
-            />
-            <Button
-              variant="secondary"
-              onClick={() => {/* Add image upload logic */}}
-              className="font-['Comic_Sans_MS'] px-4"
-            >
-              <Upload size={20} />
+              Create Room
             </Button>
           </div>
-          {thumbnailUrl && (
-            <img
-              src={thumbnailUrl}
-              alt="Room thumbnail"
-              className="w-full h-40 object-cover rounded-xl mt-2"
-            />
-          )}
         </div>
 
-        <Button
-          onClick={handleCreateRoom}
-          className="w-full font-['Comic_Sans_MS']"
-        >
-          Create Room
-        </Button>
+        {/* Right Panel - Preview */}
+        <div className="hidden lg:block w-96 bg-[#1a2331] p-6 border-l border-[#374151] relative">
+          <h2 className="text-xl font-['Comic_Sans_MS'] text-white mb-4">
+            Preview
+          </h2>
+
+          {thumbnailUrl ? (
+            <div className="relative group rounded-xl overflow-hidden">
+              <img
+                src={thumbnailUrl}
+                alt="Room thumbnail"
+                className="w-full h-48 object-cover"
+              />
+              <button
+                onClick={() => setThumbnailUrl("")}
+                className="absolute top-2 right-2 p-2 bg-black bg-opacity-50 rounded-full 
+          opacity-0 group-hover:opacity-100 transition-opacity hover:bg-opacity-70"
+              >
+                <X size={20} className="text-white" />
+              </button>
+            </div>
+          ) : (
+            <div className="w-full h-48 bg-[#2a3441] rounded-xl flex items-center justify-center">
+              <p className="text-gray-400 font-['Comic_Sans_MS']">
+                No thumbnail selected
+              </p>
+            </div>
+          )}
+
+          <div className="mt-4 p-4 bg-[#2a3441] rounded-xl">
+            <h3 className="font-['Comic_Sans_MS'] text-white mb-2">
+              {roomName || "Room Name"}
+            </h3>
+            <p className="text-gray-400 font-['Comic_Sans_MS'] text-sm">
+              {description || "Room description will appear here"}
+            </p>
+          </div>
+
+          {/* Bubble Animation */}
+          <div className="absolute inset-0 bottom-0 overflow-hidden">
+            <BubbleAnimation />
+          </div>
+        </div>
       </div>
 
       {showMapSelection && <MapSelectionModal />}
-    </Modal>
+    </div>
   );
 };
 
