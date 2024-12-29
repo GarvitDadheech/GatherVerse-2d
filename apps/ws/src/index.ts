@@ -1,7 +1,8 @@
 import { WebSocketServer } from 'ws';
 import { User } from './User';
+import { WS_PORT } from '@repo/config';
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: WS_PORT });
 
 wss.on('connection', function connection(ws) {
     console.log('User connected');
