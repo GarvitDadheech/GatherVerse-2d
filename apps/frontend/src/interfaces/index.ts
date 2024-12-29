@@ -51,4 +51,5 @@ export interface Room {
   description: string;
   currentUsers: number;
   maxCapacity: number;
+  thumbnailUrl: string;
 }
