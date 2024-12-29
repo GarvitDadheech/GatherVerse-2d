@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Heart } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMars, faVenus } from "@fortawesome/free-solid-svg-icons";
-import { Background } from "../components/Background";
+import { Background } from "@repo/ui/Background";
 import { Button } from "@repo/ui/Button";
 import { InputBox } from "@repo/ui/InpuBox";
 import { Modal } from "@repo/ui/Modal";

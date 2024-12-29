@@ -1,6 +1,6 @@
 import React from "react";
 import { Heart, Users, ArrowLeft } from "lucide-react";
-import { Background } from "../components/Background";
+import { Background } from "@repo/ui/Background";
 import { Button } from "@repo/ui/Button";
 
 interface Room {
