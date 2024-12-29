@@ -1,7 +1,7 @@
 import React from "react";
 import { Heart, Users, ArrowLeft } from "lucide-react";
 import { Background } from "../components/Background";
-import { Button } from "../components/Button";
+import { Button } from "@repo/ui/Button";
 
 interface Room {
   id: string;

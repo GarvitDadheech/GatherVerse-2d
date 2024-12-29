@@ -1,4 +1,4 @@
-import { InputBoxProps } from "../interfaces";
+import { InputBoxProps } from "../interface/index.js";
 
 export const InputBox: React.FC<InputBoxProps> = ({
   type = "text",

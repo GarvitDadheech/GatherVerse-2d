@@ -1,4 +1,4 @@
-import { ModalProps } from "../interfaces";
+import { ModalProps } from "../interface/index.js";
 
 export const Modal = ({ title, children }: ModalProps) => {
   return (

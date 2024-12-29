@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { X, Upload } from "lucide-react";
-import { Button } from "../components/Button";
-import { InputBox } from "../components/InputBox";
-import { Modal } from "../components/Modal";
+import { Button } from "@repo/ui/Button";
+import { InputBox } from "@repo/ui/InpuBox";
+import { Modal } from "@repo/ui/Modal";
 
 interface Map {
   id: string;
