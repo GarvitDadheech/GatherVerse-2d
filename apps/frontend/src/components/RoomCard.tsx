@@ -1,14 +1,6 @@
 import { Button } from "@repo/ui/Button";
-import { Heart, Users } from "lucide-react";
-
-interface Room {
-  id: string;
-  name: string;
-  description: string;
-  currentUsers: number;
-  maxCapacity: number;
-  thumbnailUrl: string;
-}
+import { Users } from "lucide-react";
+import { Room } from "../interfaces";
 
 export const RoomCard: React.FC<{ room: Room }> = ({ room }) => {
   const occupancyPercentage = (room.currentUsers / room.maxCapacity) * 100;

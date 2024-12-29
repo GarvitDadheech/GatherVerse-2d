@@ -2,28 +2,9 @@ import React, { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@repo/ui/Button";
 import { InputBox } from "@repo/ui/InpuBox";
-
 import { ImageUpload } from "../components/onboarding/ImageUpload";
-import BubbleAnimation from "../components/BubbleAnimation";
-
-interface Map {
-  id: string;
-  name: string;
-  thumbnailUrl: string;
-  description: string;
-}
-
-interface CreateRoomModalProps {
-  onCreateRoom: (roomData: RoomData) => void;
-  onBack: () => void;
-}
-
-interface RoomData {
-  name: string;
-  description: string;
-  selectedMap: Map | null;
-  thumbnailUrl: string;
-}
+import BubbleAnimation from "../animations/BubbleAnimation";
+import { CreateRoomModalProps, Map } from "../interfaces";
 
 const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   onCreateRoom,

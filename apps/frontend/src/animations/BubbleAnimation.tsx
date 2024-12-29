@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
+import { Bubble } from "../interfaces";
 
 const BubbleAnimation = () => {
-  interface Bubble {
-    id: string;
-    size: number;
-    left: number;
-    duration: number;
-  }
 
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
 
