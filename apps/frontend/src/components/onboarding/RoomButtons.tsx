@@ -1,5 +1,4 @@
 import { Button } from "@repo/ui/Button";
-import { Heart } from "lucide-react";
 import { FC } from "react";
 
 interface RoomButtonsProps {
@@ -17,10 +16,6 @@ export const RoomButtons: FC<RoomButtonsProps> = ({
       onClick={onCreateRoom}
     >
       <span className="relative z-10">Create Your Own Room</span>
-      <Heart
-        className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-        size={20}
-      />
     </Button>
 
     <Button

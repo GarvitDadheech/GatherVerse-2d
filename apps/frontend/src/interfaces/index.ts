@@ -112,3 +112,15 @@ export interface RoomData {
   selectedMap: Map | null;
   thumbnailUrl: string;
 }
+
+export interface User {
+  username: string;
+  age: string;
+  gender: string;
+  avatar: Avatar | null;
+}
+
+export interface UserContextType {
+  user: User | null;
+  setUser: (user: User) => void;
+}

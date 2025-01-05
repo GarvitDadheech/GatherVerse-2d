@@ -7,6 +7,7 @@ import { AvatarSelectionModal } from "../components/AvatarSelection";
 import CreateRoomModal from "./CreateRoomModal";
 import { Gender } from "../types";
 import { Avatar } from "../interfaces";
+import { useUserContext } from "../contexts/UserContext";
 
 const UserOnboarding = () => {
   const [username, setUsername] = useState("");
@@ -16,6 +17,7 @@ const UserOnboarding = () => {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useUserContext();
 
   return (
     <Background>
@@ -42,7 +44,15 @@ const UserOnboarding = () => {
             selectedAvatar={selectedAvatar}
             onAvatarSelect={() => setShowAvatarModal(true)}
             onCreateRoom={() => setShowCreateRoom(true)}
-            onJoinRoom={() => navigate("/public-rooms")}
+            onJoinRoom={() => {
+              setUser({
+                username,
+                age,
+                gender,
+                avatar: selectedAvatar,
+              });
+              navigate("/public-rooms");
+            }}
           />
 
           {showAvatarModal && (
@@ -61,7 +71,13 @@ const UserOnboarding = () => {
         <CreateRoomModal
           onBack={() => setShowCreateRoom(false)}
           onCreateRoom={(roomDetails) => {
-            console.log("Room created:", roomDetails);
+            setUser({
+              username,
+              age,
+              gender,
+              avatar: selectedAvatar,
+            });
+            console.log(roomDetails);
             setShowCreateRoom(false);
           }}
         />
