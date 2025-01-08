@@ -14,30 +14,30 @@ export class RoomManager {
         return this.instance;
     }
 
-    public addUser(spaceId: string, user: User) {
-        if(!this.rooms.has(spaceId)) {
-            this.rooms.set(spaceId, [user]);
+    public addUser(roomId: string, user: User) {
+        if(!this.rooms.has(roomId)) {
+            this.rooms.set(roomId, [user]);
             return;
         }
-        this.rooms.get(spaceId)?.push(user);
+        this.rooms.get(roomId)?.push(user);
     }
 
-    public broadcast(message : OutgoingMessage, user : User,spaceId: string) {
-        if(!this.rooms.has(spaceId)) {
-            console.log(`No users in room ${spaceId}`);
+    public broadcast(message : OutgoingMessage, user : User,roomId: string) {
+        if(!this.rooms.has(roomId)) {
+            console.log(`No users in room ${roomId}`);
             return;
         }
-        this.rooms.get(spaceId)?.forEach(u => {
-            if(u.id !== user.id) {
+        this.rooms.get(roomId)?.forEach(u => {
+            if(u.userId !== user.userId) {
                 u.send(message);
             }
         })
     }
 
-    public removeUser(spaceId: string, user: User) {
-        if(!this.rooms.has(spaceId)) {
+    public removeUser(roomId: string, user: User) {
+        if(!this.rooms.has(roomId)) {
             return;
         }
-        this.rooms.set(spaceId, this.rooms.get(spaceId)?.filter(u => u.id !== user.id) || []);
+        this.rooms.set(roomId, this.rooms.get(roomId)?.filter(u => u.userId !== user.userId) || []);
     }
 }

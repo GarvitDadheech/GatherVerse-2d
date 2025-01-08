@@ -3,15 +3,12 @@ import { generateCustomId } from "./utils/customId";
 import { OutgoingMessage } from "./types";
 import { RoomManager } from "./RoomManager";
 import { getSpawnPosition } from "./utils/spawnPosition";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import { JWT_SECRET } from "@repo/config";
 
 // User can send events like - join, move
 
-
 export class User {
     public userId: string;
-    private roomId: string;
+    private roomId?: string;
     private x: number = 0;
     private y: number = 0;
     private ws: WebSocket;
@@ -38,7 +35,7 @@ export class User {
                         this.send({
                             type: "space-joined",
                             payload: {
-                                users : RoomManager.getInstance().rooms.get(roomId)?.map((u) => ({userId : u.id})) || [],
+                                users : RoomManager.getInstance().rooms.get(roomId)?.map((u) => ({userId : u.userId})) || [],
                                 spawn : {
                                     x : this.x,
                                     y : this.y
@@ -52,7 +49,7 @@ export class User {
                                 x : this.x,
                                 y : this.y
                             }
-                        },this,this.spaceId!)
+                        },this,this.roomId!);
                     }
                     catch(e) {
                         this.send({
@@ -78,11 +75,11 @@ export class User {
                         RoomManager.getInstance().broadcast({
                             type: "move",
                             payload: {
-                                userId : this.id,
+                                userId : this.userId,
                                 x : this.x,
                                 y : this.y
                             }
-                        },this,this.spaceId!);
+                        },this,this.roomId!);
                         return;
                     }
                     this.send({
@@ -100,14 +97,14 @@ export class User {
     }
 
     destroy() {
-        if(this.spaceId) {
+        if(this.roomId) {
             RoomManager.getInstance().broadcast({
                 type: "user-left",
                 payload: {
                     userId : this.userId
                 }
-            },this,this.spaceId);
-            RoomManager.getInstance().removeUser(this.spaceId,this);
+            },this,this.roomId);
+            RoomManager.getInstance().removeUser(this.roomId,this);
         }
     }
 
