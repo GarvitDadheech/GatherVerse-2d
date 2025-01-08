@@ -5,15 +5,20 @@ import { RoomManager } from "./RoomManager";
 import { getSpawnPosition } from "./utils/spawnPosition";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/config";
+
+// User can send events like - join, move
+
+
 export class User {
-    public id: string;
-    public userId?: string;
-    private spaceId: string | undefined;
+    public userId: string;
+    private roomId: string;
     private x: number = 0;
     private y: number = 0;
+    private ws: WebSocket;
 
-    constructor(private ws: WebSocket) {
-        this.id = generateCustomId();
+    constructor(ws: WebSocket) {
+        this.ws = ws;
+        this.userId = generateCustomId();
         this.initHandlers();
     }
 
@@ -23,37 +28,17 @@ export class User {
             switch (parsedData.type) {
                 case "join":
                     try {
-                        const spaceId = parsedData.payload.spaceId;
-                        const token = parsedData.payload.token;
-                        if(!token) {
-                            this.send({
-                                type: "error",
-                                payload: {
-                                    message : "Token not provided"
-                                }
-                            })
-                            return;
-                        }
-                        const userId = (jwt.verify(token, JWT_SECRET) as JwtPayload).userId;
-                        if(!userId) {
-                            this.send({
-                                type: "error",
-                                payload: {
-                                    message : "Invalid token"
-                                }
-                            })
-                            return;
-                        }
-                        this.userId = userId;
-                        const spawnPosition = await getSpawnPosition(spaceId);
+                        const roomId = parsedData.payload.roomId;
+
+                        const spawnPosition = await getSpawnPosition(roomId);
                         this.x = spawnPosition.x;
                         this.y = spawnPosition.y;
-                        this.spaceId = spaceId;
-                        RoomManager.getInstance().addUser(spaceId, this);
+                        this.roomId = roomId;
+                        RoomManager.getInstance().addUser(roomId, this);
                         this.send({
                             type: "space-joined",
                             payload: {
-                                users : RoomManager.getInstance().rooms.get(spaceId)?.map((u) => ({userId : u.id})) || [],
+                                users : RoomManager.getInstance().rooms.get(roomId)?.map((u) => ({userId : u.id})) || [],
                                 spawn : {
                                     x : this.x,
                                     y : this.y
