@@ -27,7 +27,7 @@ export class User {
                     try {
                         const roomId = parsedData.payload.roomId;
 
-                        const spawnPosition = await getSpawnPosition(roomId);
+                        const spawnPosition = await getSpawnPosition();
                         this.x = spawnPosition.x;
                         this.y = spawnPosition.y;
                         this.roomId = roomId;

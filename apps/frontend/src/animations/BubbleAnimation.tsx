@@ -25,7 +25,7 @@ const BubbleAnimation = () => {
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Bubble animation */}
+      
       {bubbles.map((bubble) => (
         <div
           key={bubble.id}
