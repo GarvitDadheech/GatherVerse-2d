@@ -2,7 +2,7 @@ import { FC } from "react";
 import { faMars, faVenus } from "@fortawesome/free-solid-svg-icons";
 import { InputBox } from "@repo/ui/InpuBox";
 import { Button } from "@repo/ui/Button";
-import { Avatar, EmojiAvatar } from "../../interfaces";
+import { EmojiAvatar } from "../../interfaces";
 import { GenderButton } from "./GenderButton";
 import { Gender } from "../../types";
 import { AvatarPreview } from "../avatar/AvatarPreview";
@@ -18,7 +18,7 @@ interface ProfileFormProps {
   selectedAvatar: EmojiAvatar | null;
   onAvatarSelect: () => void;
   onCreateRoom: () => void;
-  onJoinRoom: () => void;
+  onShowPublicRooms: () => void;
 }
 
 export const ProfileForm: FC<ProfileFormProps> = ({
@@ -31,7 +31,7 @@ export const ProfileForm: FC<ProfileFormProps> = ({
   selectedAvatar,
   onAvatarSelect,
   onCreateRoom,
-  onJoinRoom,
+  onShowPublicRooms,
 }) => (
   <div className="space-y-4">
     <InputBox
@@ -84,6 +84,6 @@ export const ProfileForm: FC<ProfileFormProps> = ({
       )}
     </div>
 
-    <RoomButtons onCreateRoom={onCreateRoom} onJoinRoom={onJoinRoom} />
+    <RoomButtons onCreateRoom={onCreateRoom} onShowPublicRooms={onShowPublicRooms} />
   </div>
 );

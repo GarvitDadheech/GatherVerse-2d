@@ -4,8 +4,6 @@ import { OutgoingMessage } from "./types";
 import { RoomManager } from "./RoomManager";
 import { getSpawnPosition } from "./utils/spawnPosition";
 
-// User can send events like - join, move
-
 export class User {
     public userId: string;
     private roomId?: string;
@@ -46,28 +44,6 @@ export class User {
                     }
                     break;
 
-                case "get-room-details":
-                    try {
-                        const roomId = parsedData.payload.roomId;
-                        const roomDetails = RoomManager.getInstance().getRoomDetails(roomId);
-                        if (roomDetails) {
-                            this.send({
-                                type: "room-details",
-                                payload: { roomId, users: roomDetails }
-                            });
-                        } else {
-                            this.send({
-                                type: "error",
-                                payload: { message: `Room ${roomId} does not exist.` }
-                            });
-                        }
-                    } catch (e) {
-                        this.send({
-                            type: "error",
-                            payload: { message: `Error getting room details: ${e}` }
-                        });
-                    }
-                    break;
                 case "join":
                     try {
                         const roomId = parsedData.payload.roomId;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Background } from "@repo/ui/Background";
 import { useNavigate } from "react-router-dom";
@@ -8,12 +8,12 @@ import { ROOMS } from "../constants/room";
 
 const PublicRooms: React.FC = () => {
   const navigate = useNavigate();
+  const [rooms, setRooms] = useState<Room[]>([]);
+
 
   const handleBack = () => {
     navigate("/onboarding");
   };
-
-  const rooms: Room[] = ROOMS;
 
   return (
     <Background>

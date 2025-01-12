@@ -3,12 +3,12 @@ import { FC } from "react";
 
 interface RoomButtonsProps {
   onCreateRoom: () => void;
-  onJoinRoom: () => void;
+  onShowPublicRooms: () => void;
 }
 
 export const RoomButtons: FC<RoomButtonsProps> = ({
   onCreateRoom,
-  onJoinRoom,
+  onShowPublicRooms,
 }) => (
   <div className="pt-4 space-y-4">
     <Button
@@ -21,7 +21,7 @@ export const RoomButtons: FC<RoomButtonsProps> = ({
     <Button
       variant="secondary"
       className="font-['Comic_Sans_MS'] w-full"
-      onClick={onJoinRoom}
+      onClick={onShowPublicRooms}
     >
       Join a Room
     </Button>

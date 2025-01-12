@@ -44,7 +44,7 @@ const UserOnboarding = () => {
             selectedAvatar={selectedAvatar}
             onAvatarSelect={() => setShowAvatarModal(true)}
             onCreateRoom={() => setShowCreateRoom(true)}
-            onJoinRoom={() => {
+            onShowPublicRooms ={() => {
               setUser({
                 username,
                 age,
