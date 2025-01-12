@@ -79,7 +79,12 @@ const UserOnboarding = () => {
               avatarId: selectedAvatar?.id || "",
               roomId: roomDetails.roomId,
             });
-            navigate(`/room/${roomDetails.roomId}`);
+            navigate(`/room/${roomDetails.roomId}`, {
+              state: {
+                spawnPosition: { x: 0, y: 0 },
+                users: [],
+              }
+            });
             setShowCreateRoom(false);
           }}
         />
