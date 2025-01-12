@@ -19,10 +19,55 @@ export class User {
         this.initHandlers();
     }
 
+    getX() {
+        return this.x;
+    }
+
+    getY() {
+        return this.y;
+    }
+
     initHandlers() {
         this.ws.on("message", async (data) => {
             const parsedData = JSON.parse(data.toString());
             switch (parsedData.type) {
+                case "list-rooms":
+                    try {
+                        const rooms = RoomManager.getInstance().listRooms();
+                        this.send({
+                            type: "room-list",
+                            payload: { rooms }
+                        });
+                    } catch (e) {
+                        this.send({
+                            type: "error",
+                            payload: { message: `Error listing rooms: ${e}` }
+                        });
+                    }
+                    break;
+
+                case "get-room-details":
+                    try {
+                        const roomId = parsedData.payload.roomId;
+                        const roomDetails = RoomManager.getInstance().getRoomDetails(roomId);
+                        if (roomDetails) {
+                            this.send({
+                                type: "room-details",
+                                payload: { roomId, users: roomDetails }
+                            });
+                        } else {
+                            this.send({
+                                type: "error",
+                                payload: { message: `Room ${roomId} does not exist.` }
+                            });
+                        }
+                    } catch (e) {
+                        this.send({
+                            type: "error",
+                            payload: { message: `Error getting room details: ${e}` }
+                        });
+                    }
+                    break;
                 case "join":
                     try {
                         const roomId = parsedData.payload.roomId;
