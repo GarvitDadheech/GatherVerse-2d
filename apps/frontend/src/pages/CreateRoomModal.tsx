@@ -1,20 +1,41 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@repo/ui/Button";
 import { InputBox } from "@repo/ui/InpuBox";
 import { ImageUpload } from "../components/onboarding/ImageUpload";
 import BubbleAnimation from "../animations/BubbleAnimation";
-import { CreateRoomModalProps, Map } from "../interfaces";
+import { CreateRoomModalProps, Map, RoomData } from "../interfaces";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { useRecoilState } from "recoil";
+import { selectedRoomState } from "../store/atoms/room";
 
 const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   onCreateRoom,
   onBack,
 }) => {
-  const [roomName, setRoomName] = useState("");
-  const [description, setDescription] = useState("");
-  const [selectedMap, setSelectedMap] = useState<Map | null>(null);
+  const [selectedRoom, setSelectedRoom] = useRecoilState(selectedRoomState);
+  const { sendMessage, addMessageHandler, removeMessageHandler } =
+    useWebSocket();
   const [showMapSelection, setShowMapSelection] = useState(false);
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
+
+  useEffect(() => {
+    const handleMessage = (message: any) => {
+      switch (message.type) {
+        case "room-created":
+          onCreateRoom({
+            roomId: message.payload.roomId,
+            ...selectedRoom!,
+          });
+          break;
+        case "error":
+          console.error("WebSocket error:", message.payload.message);
+          break;
+      }
+    };
+
+    addMessageHandler(handleMessage);
+    return () => removeMessageHandler(handleMessage);
+  }, [selectedRoom]);
 
   const maps: Map[] = [
     {
@@ -32,12 +53,59 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   ];
 
   const handleCreateRoom = () => {
-    onCreateRoom({
-      name: roomName,
-      description,
-      selectedMap,
-      thumbnailUrl,
+    if (!selectedRoom?.name || !selectedRoom?.mapId) {
+      console.log("Please select a room name and map");
+      return;
+    }
+
+    sendMessage({
+      type: "create-room",
+      payload: {
+        name: selectedRoom?.name,
+        description: selectedRoom?.description,
+        mapId: selectedRoom?.mapId,
+        thumbnailUrl: selectedRoom?.thumbnailUrl,
+      },
     });
+  };
+
+  const getSelectedMap = () => {
+    return maps.find((map) => map.id === selectedRoom?.mapId);
+  };
+
+  const updateRoomField = (field: keyof RoomData, value: string) => {
+    setSelectedRoom((prev) => {
+      if (!prev) {
+        return {
+          name: field === "name" ? value : "",
+          description: field === "description" ? value : "",
+          mapId: field === "mapId" ? value : "",
+          thumbnailUrl: field === "thumbnailUrl" ? value : "",
+        };
+      }
+
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
+  };
+
+  const handleMapSelection = (map: Map) => {
+    setSelectedRoom((prev) => {
+      const baseRoom = prev || {
+        name: "",
+        description: "",
+        mapId: "",
+        thumbnailUrl: "",
+      };
+
+      return {
+        ...baseRoom,
+        mapId: map.id,
+      };
+    });
+    setShowMapSelection(false);
   };
 
   const MapSelectionModal = () => (
@@ -59,13 +127,10 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           {maps.map((map) => (
             <button
               key={map.id}
-              onClick={() => {
-                setSelectedMap(map);
-                setShowMapSelection(false);
-              }}
+              onClick={() => handleMapSelection(map)}
               className={`p-4 rounded-xl border-2 transition-all duration-300 text-left
                 ${
-                  selectedMap?.id === map.id
+                  selectedRoom?.mapId === map.id
                     ? "border-[#4fd1c5] bg-[#2a3441]"
                     : "border-[#374151] hover:border-[#4fd1c5]"
                 }`}
@@ -88,10 +153,11 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     </div>
   );
 
+  const selectedMap = getSelectedMap();
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-[#1f2937] rounded-2xl max-w-5xl w-full mx-4 h-[90vh] flex overflow-hidden">
-        {/* Left Panel - Form */}
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="relative mb-6">
             <button
@@ -109,21 +175,20 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           <div className="space-y-4">
             <InputBox
               placeholder="Room Name"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
+              value={selectedRoom?.name ?? ""}
+              onChange={(e) => updateRoomField("name", e.target.value)}
               className="font-['Comic_Sans_MS']"
             />
 
             <textarea
               placeholder="Room Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={selectedRoom?.description ?? ""}
+              onChange={(e) => updateRoomField("description", e.target.value)}
               className="w-full px-6 py-4 bg-[#2a3441] rounded-2xl border-2 border-[#374151] 
                 focus:border-[#4fd1c5] focus:outline-none text-white placeholder-gray-400 
                 h-24 font-['Comic_Sans_MS'] resize-none"
             />
 
-            {/* Map Selection */}
             <div>
               {selectedMap ? (
                 <div className="p-4 bg-[#2a3441] rounded-xl border-2 border-[#4fd1c5]">
@@ -160,14 +225,13 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               )}
             </div>
 
-            {/* Room Thumbnail Upload */}
             <div className="space-y-2">
               <label className="text-gray-400 font-['Comic_Sans_MS'] text-sm">
                 Room Thumbnail (Optional)
               </label>
               <ImageUpload
-                value={thumbnailUrl}
-                onImageSelect={setThumbnailUrl}
+                value={selectedRoom?.thumbnailUrl ?? ""}
+                onImageSelect={(url) => updateRoomField("thumbnailUrl", url)}
               />
             </div>
 
@@ -180,21 +244,20 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           </div>
         </div>
 
-        {/* Right Panel - Preview */}
         <div className="hidden lg:block w-96 bg-[#1a2331] p-6 border-l border-[#374151] relative">
           <h2 className="text-xl font-['Comic_Sans_MS'] text-white mb-4">
             Preview
           </h2>
 
-          {thumbnailUrl ? (
+          {selectedRoom?.thumbnailUrl ? (
             <div className="relative group rounded-xl overflow-hidden">
               <img
-                src={thumbnailUrl}
+                src={selectedRoom?.thumbnailUrl}
                 alt="Room thumbnail"
                 className="w-full h-48 object-cover"
               />
               <button
-                onClick={() => setThumbnailUrl("")}
+                onClick={() => updateRoomField("thumbnailUrl", "")}
                 className="absolute top-2 right-2 p-2 bg-black bg-opacity-50 rounded-full 
           opacity-0 group-hover:opacity-100 transition-opacity hover:bg-opacity-70"
               >
@@ -211,14 +274,13 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
 
           <div className="mt-4 p-4 bg-[#2a3441] rounded-xl">
             <h3 className="font-['Comic_Sans_MS'] text-white mb-2">
-              {roomName || "Room Name"}
+              {selectedRoom?.name || "Room Name"}
             </h3>
             <p className="text-gray-400 font-['Comic_Sans_MS'] text-sm">
-              {description || "Room description will appear here"}
+              {selectedRoom?.description || "Room description will appear here"}
             </p>
           </div>
 
-          {/* Bubble Animation */}
           <div className="absolute inset-0 bottom-0 overflow-hidden">
             <BubbleAnimation />
           </div>

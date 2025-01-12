@@ -1,15 +1,51 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Background } from "@repo/ui/Background";
 import { useNavigate } from "react-router-dom";
 import { RoomCard } from "../components/RoomCard";
 import { Room } from "../interfaces";
-import { ROOMS } from "../constants/room";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { wsConnectedState } from "../store/atoms/websocketAtom";
+import { useRecoilValue } from "recoil";
+import { debounce } from 'lodash';
 
 const PublicRooms: React.FC = () => {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { sendMessage, addMessageHandler, removeMessageHandler } = useWebSocket();
+  const isConnected = useRecoilValue(wsConnectedState);
 
+  useEffect(() => {
+    const handleMessage = (message: any) => {
+      switch (message.type) {
+        case "room-list":
+          setRooms(message.payload.rooms);
+          break;
+        case "error":
+          console.error("WebSocket error:", message.payload.message);
+          break;
+      }
+    };
+
+    addMessageHandler(handleMessage);
+
+    if (isConnected) {
+      sendMessage({ type: "list-rooms", payload: {} });
+    }
+
+    return () => {
+      removeMessageHandler(handleMessage);
+    };
+  }, [isConnected]);
+
+  const filteredRooms = rooms.filter(room => 
+    room.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSearch = debounce((query) => {
+    setSearchQuery(query);
+  }, 300);
 
   const handleBack = () => {
     navigate("/onboarding");
@@ -46,11 +82,12 @@ const PublicRooms: React.FC = () => {
               className="w-full px-6 py-4 bg-[#1f2937] rounded-2xl border-2 border-[#374151] 
                 focus:border-[#4fd1c5] focus:outline-none text-white placeholder-gray-400 
                 font-['Comic_Sans_MS'] transition-all duration-300"
+              onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
           <div className="px-16 mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {rooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
+            {filteredRooms.map((room) => (
+              <RoomCard key={room.roomId} room={room} />
             ))}
           </div>
         </div>

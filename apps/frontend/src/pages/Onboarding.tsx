@@ -50,6 +50,7 @@ const UserOnboarding = () => {
                 age,
                 gender,
                 avatarId: selectedAvatar?.id || "",
+                roomId: "",
               });
               navigate("/public-rooms");
             }}
@@ -76,8 +77,9 @@ const UserOnboarding = () => {
               age,
               gender,
               avatarId: selectedAvatar?.id || "",
+              roomId: roomDetails.roomId,
             });
-            console.log(roomDetails);
+            navigate(`/room/${roomDetails.roomId}`);
             setShowCreateRoom(false);
           }}
         />

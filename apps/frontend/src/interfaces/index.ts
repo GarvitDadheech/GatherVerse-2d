@@ -85,9 +85,10 @@ export interface AvatarPreviewProps {
 }
 
 export interface Room {
-  id: string;
+  roomId: string;
   name: string;
   description: string;
+  mapId: string;
   thumbnailUrl: string;
 }
 
@@ -139,14 +140,14 @@ export interface Map {
 }
 
 export interface CreateRoomModalProps {
-  onCreateRoom: (roomData: RoomData) => void;
+  onCreateRoom: (room: Room) => void;
   onBack: () => void;
 }
 
 export interface RoomData {
   name: string;
   description: string;
-  selectedMap: Map | null;
+  mapId: string;
   thumbnailUrl: string;
 }
 
@@ -155,6 +156,7 @@ export interface User {
   age: string;
   gender: string;
   avatarId: string;
+  roomId: string;
 }
 
 export interface UserContextType {

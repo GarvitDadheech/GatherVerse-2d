@@ -1,8 +1,56 @@
 import { Button } from "@repo/ui/Button";
 import { Users } from "lucide-react";
 import { Room } from "../interfaces";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { wsConnectedState } from "../store/atoms/websocketAtom";
+import { useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
+import { useNavigate } from "react-router-dom";
 
 export const RoomCard: React.FC<{ room: Room }> = ({ room }) => {
+  const { sendMessage, addMessageHandler, removeMessageHandler } = useWebSocket();
+  const isConnected = useRecoilValue(wsConnectedState);
+  const [isJoining, setIsJoining] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleMessage = (message: any) => {
+      switch (message.type) {
+        case "space-joined":
+          const joinResponse = message;
+          setIsJoining(false);
+          navigate(`/room/${room.roomId}`, {
+            state: {
+              spawnPosition: joinResponse.payload.spawn,
+              users: joinResponse.payload.users
+            }
+          });
+          break;
+        case "error":
+          console.error("Error joining room:", message.payload.message);
+          setIsJoining(false);
+          break;
+      }
+    };
+
+    addMessageHandler(handleMessage);
+    return () => removeMessageHandler(handleMessage);
+  }, [room.roomId, navigate, addMessageHandler, removeMessageHandler]);
+
+  const handleJoinRoom = () => {
+    if(!isConnected) {
+      console.error("WebSocket is not connected");
+      return;
+    }
+    setIsJoining(true);
+    sendMessage({
+      type: "join",
+      payload: {
+        roomId: room.roomId
+      }
+    });
+  };
+
 
   return (
     <div className="bg-[#1f2937] rounded-2xl border-2 border-[#374151] hover:border-[#4fd1c5] transition-all duration-300 overflow-hidden group h-full">
@@ -27,11 +75,11 @@ export const RoomCard: React.FC<{ room: Room }> = ({ room }) => {
 
         <Button
           className="w-full font-['Comic_Sans_MS'] group relative overflow-hidden"
-          onClick={() => {
-            /* Add your join room logic */
-          }}
+          onClick={handleJoinRoom}
         >
-          <span className="relative z-10">Join Room</span>
+          <span className="relative z-10">
+            {isJoining ? "Joining..." : "Join Room"}
+          </span>
           <Users
             className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
             size={20}
