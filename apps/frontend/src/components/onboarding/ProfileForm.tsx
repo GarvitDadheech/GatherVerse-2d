@@ -2,10 +2,10 @@ import { FC } from "react";
 import { faMars, faVenus } from "@fortawesome/free-solid-svg-icons";
 import { InputBox } from "@repo/ui/InpuBox";
 import { Button } from "@repo/ui/Button";
-import { Avatar } from "../../interfaces";
+import { Avatar, EmojiAvatar } from "../../interfaces";
 import { GenderButton } from "./GenderButton";
 import { Gender } from "../../types";
-import { AvatarPreview } from "../AvatarPreview";
+import { AvatarPreview } from "../avatar/AvatarPreview";
 import { RoomButtons } from "./RoomButtons";
 
 interface ProfileFormProps {
@@ -15,7 +15,7 @@ interface ProfileFormProps {
   setAge: (value: string) => void;
   gender: Gender;
   setGender: (value: Gender) => void;
-  selectedAvatar: Avatar | null;
+  selectedAvatar: EmojiAvatar | null;
   onAvatarSelect: () => void;
   onCreateRoom: () => void;
   onJoinRoom: () => void;

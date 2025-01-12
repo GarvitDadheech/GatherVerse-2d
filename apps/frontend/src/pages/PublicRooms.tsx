@@ -22,7 +22,6 @@ const PublicRooms: React.FC = () => {
         shadow-[0_0_50px_rgba(79,209,197,0.2)] border-2 border-[#4fd1c5] mt-8`}
       >
         <div className="min-h-screen">
-          {/* Header */}
           <div className="px-16 mx-auto mb-8 flex items-center">
             <button
               onClick={handleBack}
@@ -40,8 +39,6 @@ const PublicRooms: React.FC = () => {
               </p>
             </div>
           </div>
-
-          {/* Search Bar */}
           <div className="px-16  mx-auto mb-8">
             <input
               type="text"
@@ -51,8 +48,6 @@ const PublicRooms: React.FC = () => {
                 font-['Comic_Sans_MS'] transition-all duration-300"
             />
           </div>
-
-          {/* Room Grid */}
           <div className="px-16 mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {rooms.map((room) => (
               <RoomCard key={room.id} room={room} />

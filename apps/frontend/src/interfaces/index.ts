@@ -27,10 +27,44 @@ export interface AvatarSelectionModalProps {
   onSelect: (avatar: { id: number; name: string; url: string }) => void;
 }
 
-export interface Avatar {
-  url: string;
-  name: string;
+export interface SpriteFrame {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
+
+export interface EmojiAvatar {
+  id: string;
+  emoji: string;
+}
+
+export interface AnimationSequence {
+  frames: SpriteFrame[];
+  frameCount: number;
+}
+
+export interface AvatarAnimations {
+  idle: AnimationSequence;
+  run: AnimationSequence;
+  sit: {
+    up: SpriteFrame;
+    down: SpriteFrame;
+    left: SpriteFrame;
+    right: SpriteFrame;
+  };
+}
+
+export interface Avatar {
+  id: string;
+  name: string;
+  description: string;
+  spriteSheet: string;  // URL to the sprite sheet image
+  animations: AvatarAnimations;
+  frameWidth: number;
+  frameHeight: number;
+}
+  
 
 export interface GenderButtonProps {
   value: Gender;
@@ -49,8 +83,6 @@ export interface Room {
   id: string;
   name: string;
   description: string;
-  currentUsers: number;
-  maxCapacity: number;
   thumbnailUrl: string;
 }
 
@@ -117,7 +149,7 @@ export interface User {
   username: string;
   age: string;
   gender: string;
-  avatar: Avatar | null;
+  avatarId: string;
 }
 
 export interface UserContextType {
