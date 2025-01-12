@@ -55,6 +55,11 @@ export interface AvatarAnimations {
   };
 }
 
+export interface WsMessage {
+  type: string;
+  payload: any;
+}
+
 export interface Avatar {
   id: string;
   name: string;
