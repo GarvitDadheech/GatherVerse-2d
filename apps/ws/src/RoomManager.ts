@@ -1,5 +1,6 @@
 import type { User } from "./User";
 import {OutgoingMessage} from "./types/index";
+import { generateCustomId } from "./utils/customId";
 
 export class RoomManager {
     rooms : Map<string, User[]> = new Map();
@@ -13,6 +14,12 @@ export class RoomManager {
             this.instance = new RoomManager();
         }
         return this.instance;
+    }
+
+    public createRoom() {
+        const roomId = generateCustomId();
+        this.rooms.set(roomId, []);
+        return roomId;
     }
 
     public addUser(roomId: string, user: User) {

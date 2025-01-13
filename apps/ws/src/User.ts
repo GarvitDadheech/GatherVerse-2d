@@ -29,6 +29,20 @@ export class User {
         this.ws.on("message", async (data) => {
             const parsedData = JSON.parse(data.toString());
             switch (parsedData.type) {
+                case "create-room":
+                    try {
+                        const roomId = RoomManager.getInstance().createRoom();
+                        this.send({
+                            type: "room-created",
+                            payload: { roomId }
+                        });
+                    } catch (e) {
+                        this.send({
+                            type: "error",
+                            payload: { message: `Error creating room: ${e}` }
+                        });
+                    }
+                    break;
                 case "list-rooms":
                     try {
                         const rooms = RoomManager.getInstance().listRooms();
