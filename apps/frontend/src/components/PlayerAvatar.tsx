@@ -3,7 +3,6 @@ import { EMOJI_AVATARS } from '../constants/avatars';
 
 interface PlayerAvatarProps {
   position: { x: number; y: number };
-  direction: 'up' | 'down' | 'left' | 'right';
   username: string;
   age: string;
   gender: string;
@@ -13,7 +12,6 @@ interface PlayerAvatarProps {
 
 export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
   position,
-  direction,
   username,
   age,
   gender,

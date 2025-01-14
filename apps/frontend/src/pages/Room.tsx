@@ -1,373 +1,522 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import { Position, RoomMap, Player } from '../types';
-import { Message as MessageType, UserTyping } from '../interfaces';
-import { MOCK_MESSAGES } from '../constants/chat';
-import { createNewMessage, handleFileRead } from '../utils/messageHandlers';
-import { ChatHeader } from '../components/chat/ChatHeader';
-import { Message } from '../components/chat/Message';
-import { TypingIndicator } from '../components/chat/TypingIndicator';
-import { MessageInput } from '../components/chat/MessageInput';
-import { getRoomMap } from '../constants/roomMaps';
-import { useUserContext } from '../contexts/UserContext';
-import { PlayerAvatar } from '../components/PlayerAvatar';
+  import React, { useState, useEffect, useCallback, useRef } from 'react';
+  import { useParams, useLocation, useNavigate } from 'react-router-dom';
+  import { ChevronRight, ChevronLeft, Users, MessageSquare, LogOut } from 'lucide-react';
+  import { useWebSocket } from '../hooks/useWebSocket';
+  import { useUserContext } from '../contexts/UserContext';
+  import { PlayerAvatar } from '../components/PlayerAvatar';
+  import { ChatHeader } from '../components/chat/ChatHeader';
+  import { Message } from '../components/chat/Message';
+  import { TypingIndicator } from '../components/chat/TypingIndicator';
+  import { MessageInput } from '../components/chat/MessageInput';
+  import { Button } from "@repo/ui/Button";
+  import { WsMessage } from '../interfaces';
 
-const CELL_SIZE = 32;
-const MOVE_DELAY = 150;
-const SCROLL_THRESHOLD = 300;
+  const CELL_SIZE = 48;
+  const MOVE_DELAY = 150;
+  const GRID_WIDTH = 20;
+  const GRID_HEIGHT = 15;
 
-export default function Room() {
-  const { roomId } = useParams();
-  const navigate = useNavigate();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastMoveRef = useRef(Date.now());
-  const userContext = useUserContext();
-  const { user } = userContext;
-  const [playerDirection, setPlayerDirection] = useState<'up' | 'down' | 'left' | 'right'>('down');
-  console.log(user);
-
-  const { username, age, gender, avatarId } = user || {};
-  
-  // Room state
-  const [roomMap, setRoomMap] = useState<RoomMap | null>(null);
-  const [player, setPlayer] = useState<Player | null>(null);
-  const [gridOffset, setGridOffset] = useState(0);
-
-  // Chat state
-  const [isChatOpen, setIsChatOpen] = useState(true);
-  const [messages, setMessages] = useState<MessageType[]>(MOCK_MESSAGES);
-  const [newMessage, setNewMessage] = useState("");
-  const [typingUsers, setTypingUsers] = useState<UserTyping[]>([]);
-  const [showReactions, setShowReactions] = useState<number | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
-
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
-  const debouncedTypingRef = useRef<NodeJS.Timeout>();
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-
-  // Initialize room and player
-  useEffect(() => {
-    const map = getRoomMap(roomId || '');
-    if (!map) {
-      navigate('/');
-      return;
-    }
+  const Room = () => {
+    const { roomId } = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { user } = useUserContext();
+    const { sendMessage, addMessageHandler, removeMessageHandler } = useWebSocket();
     
-    setRoomMap(map);
-    setPlayer({
-      id: 'current-player',
-      name: 'Player',
-      position: map.spawnPoint,
-      avatarUrl: '/api/placeholder/32/32'
+    // Game State
+    const [players, setPlayers] = useState(new Map());
+    const [currentPlayer, setCurrentPlayer] = useState({
+      x: location.state?.spawnPosition?.x || 0,
+      y: location.state?.spawnPosition?.y || 0,
     });
-  }, [roomId, navigate]);
+    const lastMoveRef = useRef(Date.now());
+    
+    // UI State
+    const [isChatOpen, setIsChatOpen] = useState(true);
+    const [isPlayerListOpen, setIsPlayerListOpen] = useState(false);
+    const [messages, setMessages] = useState<any>([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [typingUsers, setTypingUsers] = useState<{ user: string; avatar: string }[]>([]);
+    const [showReactions, setShowReactions] = useState<number | null>(null);
+    const [isTyping, setIsTyping] = useState(false);
 
-  // Chat typing effects
-  useEffect(() => {
-    if (newMessage) {
-      const typingTimeout = setTimeout(() => {
-        setTypingUsers([{ user: "Alice", avatar: "/api/placeholder/32/32" }]);
+    const typingTimeoutRef = useRef<NodeJS.Timeout>();
+    const debouncedTypingRef = useRef<NodeJS.Timeout>();
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+
+    // Initialize room with existing users
+    useEffect(() => {
+      if (!user) {
+        navigate('/');
+        return;
+      }
+      interface User {
+        userId: string;
+        x: number;
+        y: number;
+        username: string;
+        avatarId: string;
+      }
+
+      const initialUsers : User[] = location.state?.users || [];
+      const usersMap = new Map();
+      initialUsers.forEach(user => {
+        usersMap.set(user.userId, {
+          x: user.x,
+          y: user.y,
+          username: user.username,
+          avatarId: user.avatarId
+        });
       });
+      setPlayers(usersMap);
+    }, [location.state, user, navigate]);
 
-      return () => {
-        clearTimeout(typingTimeout);
-        setTypingUsers([]);
+    // WebSocket message handlers
+    useEffect(() => {
+      const handleMessage = (message : WsMessage) => {
+        switch (message.type) {
+          case "user-joined":
+            setPlayers(prev => {
+              const newMap = new Map(prev);
+              newMap.set(message.payload.userId, {
+                x: message.payload.x,
+                y: message.payload.y,
+                username: message.payload.username,
+                avatarId: message.payload.avatarId
+              });
+              return newMap;
+            });
+            break;
+
+          case "user-left":
+            setPlayers(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(message.payload.userId);
+              return newMap;
+            });
+            break;
+
+          case "move":
+            setPlayers(prev => {
+              const newMap = new Map(prev);
+              const player = newMap.get(message.payload.userId);
+              if (player) {
+                newMap.set(message.payload.userId, {
+                  ...player,
+                  x: message.payload.x,
+                  y: message.payload.y,
+                });
+              }
+              return newMap;
+            });
+            break;
+
+          // case "chat":
+          //   setMessages(prev => [...prev, {
+          //     id: Date.now(),
+          //     userId: message.payload.userId,
+          //     username: message.payload.username,
+          //     content: message.payload.content,
+          //     timestamp: new Date().toISOString()
+          //   }]);
+          //   break;
+
+          //   case "typing":
+          //   if (message.payload.userId !== user?.id) {
+          //     setTypingUsers(prev => {
+          //       const userExists = prev.some(u => u.user === message.payload.username);
+          //       if (message.payload.isTyping && !userExists) {
+          //         return [...prev, { user: message.payload.username, avatar: "/api/placeholder/32/32" }];
+          //       } else if (!message.payload.isTyping) {
+          //         return prev.filter(u => u.user !== message.payload.username);
+          //       }
+          //       return prev;
+          //     });
+          //   }
+          //   break;
+
+          // case "reaction":
+          //   setMessages(prev => prev.map(msg => {
+          //     if (msg.id === message.payload.messageId) {
+          //       return {
+          //         ...msg,
+          //         reactions: [...(msg.reactions || []), {
+          //           emoji: message.payload.emoji,
+          //           count: 1,
+          //           users: [message.payload.username]
+          //         }]
+          //       };
+          //     }
+          //     return msg;
+          //   }));
+          //   break;
+        }
       };
-    }
-  }, [newMessage]);
 
-  // Cleanup typing timeouts
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      if (debouncedTypingRef.current) clearTimeout(debouncedTypingRef.current);
-    };
-  }, []);
-
-  // Handle scroll when player moves
-  useEffect(() => {
-    if (!containerRef.current || !player) return;
-
-    const containerWidth = containerRef.current.offsetWidth;
-    const playerPixelX = player.position.x * CELL_SIZE;
-    const fromRight = containerWidth - playerPixelX;
-
-    if (fromRight < SCROLL_THRESHOLD) {
-      const newOffset = Math.min(
-        (SCROLL_THRESHOLD - fromRight) / 2,
-        (roomMap?.gridSize.width || 0) * CELL_SIZE - containerWidth
-      );
-      setGridOffset(Math.max(0, newOffset));
-    } else if (playerPixelX < SCROLL_THRESHOLD) {
-      setGridOffset(Math.max(0, gridOffset - 10));
-    }
-  }, [player?.position, roomMap?.gridSize.width]);
-
-  // Movement validation
-  const isValidMove = useCallback((pos: Position): boolean => {
-    if (!roomMap) return false;
+      addMessageHandler(handleMessage);
+      return () => removeMessageHandler(handleMessage);
+    }, [addMessageHandler, removeMessageHandler]);
     
-    if (pos.x < 0 || pos.y < 0 || 
-        pos.x >= roomMap.gridSize.width || 
-        pos.y >= roomMap.gridSize.height) {
-      return false;
-    }
-    
-    return !roomMap.staticElements.some(element => {
-      const elementEndX = element.position.x + element.width;
-      const elementEndY = element.position.y + element.height;
-      
-      return pos.x >= element.position.x && pos.x < elementEndX &&
-             pos.y >= element.position.y && pos.y < elementEndY &&
-             !element.walkable;
-    });
-  }, [roomMap]);
 
-  // Handle keyboard movement
-  useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (!player || !roomMap) return;
+    useEffect(() => {
+      return () => {
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        if (debouncedTypingRef.current) clearTimeout(debouncedTypingRef.current);
+      };
+    }, []);
 
-      const now = Date.now();
-      if (now - lastMoveRef.current < MOVE_DELAY) return;
+    // Movement validation
+    const isValidMove = useCallback((newX: number, newY: number) => {
+      return newX >= 0 && newX < GRID_WIDTH && newY >= 0 && newY < GRID_HEIGHT;
+    }, []);
 
-      const newPos = { ...player.position };
-      let newDirection = playerDirection;
-      
-      switch (e.key) {
-        case 'ArrowUp':
-          newPos.y = Math.max(0, player.position.y - 1);
-          newDirection = 'up';
-          break;
-        case 'ArrowDown':
-          newPos.y = Math.min(roomMap.gridSize.height - 1, player.position.y + 1);
-          newDirection = 'down';
-          break;
-        case 'ArrowLeft':
-          newPos.x = Math.max(0, player.position.x - 1);
-          newDirection = 'left';
-          break;
-        case 'ArrowRight':
-          newPos.x = Math.min(roomMap.gridSize.width - 1, player.position.x + 1);
-          newDirection = 'right';
-          break;
-        default:
-          return;
-      }
-
-      if (isValidMove(newPos)) {
-        setPlayer(prev => prev ? { ...prev, position: newPos } : null);
-        setPlayerDirection(newDirection);
-        lastMoveRef.current = now;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, [player, roomMap, isValidMove, playerDirection]);
-  // Chat handlers
-  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setNewMessage(newValue);
-
-    if (debouncedTypingRef.current) {
-      clearTimeout(debouncedTypingRef.current);
-    }
-
-    if (!isTyping) {
-      setIsTyping(true);
-      setTypingUsers([{ user: "You", avatar: "/api/placeholder/32/32" }]);
-    }
-
-    debouncedTypingRef.current = setTimeout(() => {
+    const handleSendMessage = () => {
+      if (!newMessage.trim() || !user) return;
+  
+      const newMsg = {
+        id: Date.now(),
+        content: newMessage,
+        type: 'text',
+        sender: user.username,
+        avatar: "/api/placeholder/32/32",
+        timestamp: new Date().toISOString(),
+        reactions: []
+      };
+  
+      setMessages((prev: any[]) => [...prev, newMsg]);  sendMessage({
+        type: 'chat',
+        payload: {
+          content: newMessage,
+          username: user.username
+        }
+      });
+      setNewMessage('');
       setIsTyping(false);
       setTypingUsers([]);
-    }, 1200);
-  };
-
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const newMsg = createNewMessage(
-        newMessage,
-        "text",
-        "You",
-        "/api/placeholder/32/32",
-        messages
-      );
-      setMessages([...messages, newMsg]);
-      setNewMessage("");
-      setIsTyping(false);
-      setTypingUsers([]);
-      
+  
       if (debouncedTypingRef.current) {
         clearTimeout(debouncedTypingRef.current);
       }
-
+  
       scrollToBottom();
-    }
-  };
+    };
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file || !user) return;
+  
+      try {
+        // Handle image uploads
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const newMsg = {
+              id: Date.now(),
+              content: reader.result,
+              type: 'image',
+              sender: user.username,
+              avatar: "/api/placeholder/32/32",
+              timestamp: new Date().toISOString(),
+              reactions: []
+            };
+            
+            setMessages((prev: any[]) => [...prev, newMsg]);  scrollToBottom();
+          };
+          reader.readAsDataURL(file);
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleFileRead(
-        file,
-        (newMsg) => {
-          setMessages([...messages, newMsg]);
-          scrollToBottom();
-        },
-        messages
-      );
-    }
-  };
+    const handleAddReaction = (messageId: number, emoji: string) => {
+      interface Reaction {
+        emoji: string;
+        count: number;
+        users: string[];
+      }
 
-  const handleReactionClick = (messageId: number) => {
-    setShowReactions(showReactions === messageId ? null : messageId);
-  };
+      interface Message {
+        id: number;
+        content: string;
+        type: string;
+        sender: string;
+        avatar: string;
+        timestamp: string;
+        reactions: Reaction[];
+      }
 
-  const handleAddReaction = (messageId: number, emoji: string) => {
-    setMessages(
-      messages.map((msg) => {
-        if (msg.id === messageId) {
-          const reactions = msg.reactions || [];
-          const existingReaction = reactions.find((r) => r.emoji === emoji);
+      setMessages((messages: Message[]) =>
+        messages.map((msg: Message) => {
+          if (msg.id === messageId) {
+            const reactions = msg.reactions || [];
+            const existingReaction = reactions.find((r: Reaction) => r.emoji === emoji);
 
-          if (existingReaction) {
+            if (existingReaction) {
+              return {
+                ...msg,
+                reactions: reactions.map((r: Reaction) =>
+                  r.emoji === emoji
+                    ? { ...r, count: r.count + 1, users: [...r.users, user?.username || ''] }
+                    : r
+                )
+              };
+            }
+
             return {
               ...msg,
-              reactions: reactions.map((r) =>
-                r.emoji === emoji
-                  ? { ...r, count: r.count + 1, users: [...r.users, "You"] }
-                  : r
-              ),
+              reactions: [...reactions, { emoji, count: 1, users: [user?.username || ''] }]
             };
           }
-
-          return {
-            ...msg,
-            reactions: [...reactions, { emoji, count: 1, users: ["You"] }],
-          };
+          return msg;
+        })
+      );  setShowReactions(null);
+  
+      // Notify other users about the reaction via WebSocket
+      sendMessage({
+        type: 'reaction',
+        payload: {
+          messageId,
+          emoji,
+          username: user?.username
         }
-        return msg;
-      })
-    );
-    setShowReactions(null);
-  };
+      });
+    };
+  
+    const scrollToBottom = () => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    };
+  
 
-  const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  };
+    // Handle keyboard movement
+    useEffect(() => {
+      const handleKeydown = (e: KeyboardEvent) => {
+        if (!user) return;
 
-  if (!roomMap || !player) return null;
+        const now = Date.now();
+        if (now - lastMoveRef.current < MOVE_DELAY) return;
 
-  return (
-    <div className="flex h-screen bg-[#1f2937] overflow-hidden">
-      {/* Game Area */}
-      <div 
-        ref={containerRef}
-        className="flex-1 relative overflow-hidden"
-      >
+        let newX = currentPlayer.x;
+        let newY = currentPlayer.y;
+
+        switch (e.key) {
+          case 'ArrowUp':
+            newY -= 1;
+            break;
+          case 'ArrowDown':
+            newY += 1;
+            break;
+          case 'ArrowLeft':
+            newX -= 1;
+            break;
+          case 'ArrowRight':
+            newX += 1;
+            break;
+          default:
+            return;
+        }
+
+        if (isValidMove(newX, newY)) {
+          setCurrentPlayer(prev => ({
+            ...prev,
+            x: newX,
+            y: newY,
+          }));
+          sendMessage({
+            type: 'move',
+            payload: { x: newX, y: newY }
+          });
+          lastMoveRef.current = now;
+        }
+      };
+
+      window.addEventListener('keydown', handleKeydown);
+      return () => window.removeEventListener('keydown', handleKeydown);
+    }, [currentPlayer, user, sendMessage, isValidMove]);
+
+    const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      setNewMessage(newValue);
+  
+      if (debouncedTypingRef.current) {
+        clearTimeout(debouncedTypingRef.current);
+      }
+  
+      if (!isTyping) {
+        setIsTyping(true);
+        setTypingUsers([{ user: user?.username || "You", avatar: "/api/placeholder/32/32" }]);
+      }
+  
+      debouncedTypingRef.current = setTimeout(() => {
+        setIsTyping(false);
+        setTypingUsers([]);
+      }, 1200);
+  
+      // Notify other users about typing status via WebSocket
+      sendMessage({
+        type: 'typing',
+        payload: { isTyping: true }
+      });
+    };
+
+    const handleLeaveRoom = () => {
+      navigate('/');
+    };
+    const handleReactionClick = (messageId: number) => {
+      setShowReactions(showReactions === messageId ? null : messageId);
+    };
+
+    return (
+      <div className="relative h-screen w-full overflow-hidden bg-[#1f2937]">
+        {/* Game Grid */}
         <div 
-          className="relative w-full h-full transition-transform duration-300 ease-out"
+          className="absolute inset-0 flex items-center justify-center"
           style={{
-            backgroundColor: roomMap.backgroundColor,
-            backgroundImage: roomMap.backgroundImage ? `url(${roomMap.backgroundImage})` : undefined,
-            transform: `translateX(-${gridOffset}px)`,
+            right: isChatOpen ? '30%' : 0,
+            transition: 'right 0.3s ease-in-out'
           }}
         >
-          {/* Grid */}
           <div 
-            className="absolute inset-0"
+            className="relative"
             style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${roomMap.gridSize.width}, ${CELL_SIZE}px)`,
-              gridTemplateRows: `repeat(${roomMap.gridSize.height}, ${CELL_SIZE}px)`,
+              width: GRID_WIDTH * CELL_SIZE,
+              height: GRID_HEIGHT * CELL_SIZE,
             }}
           >
-            {Array.from({ length: roomMap.gridSize.width * roomMap.gridSize.height }).map((_, i) => (
-              <div key={i} className="border border-white/5" />
-            ))}
-          </div>
-
-          {/* Static Elements */}
-          {roomMap.staticElements.map(element => (
-            <div
-              key={element.id}
-              className="absolute transition-all duration-200"
+            {/* Grid Background */}
+            <div className="absolute inset-0 grid"
               style={{
-                left: element.position.x * CELL_SIZE,
-                top: element.position.y * CELL_SIZE,
-                width: element.width * CELL_SIZE,
-                height: element.height * CELL_SIZE,
+                gridTemplateColumns: `repeat(${GRID_WIDTH}, ${CELL_SIZE}px)`,
+                gridTemplateRows: `repeat(${GRID_HEIGHT}, ${CELL_SIZE}px)`,
               }}
             >
-              <img
-                src={element.imageUrl}
-                alt={element.type}
-                className="w-full h-full object-cover"
+              {Array.from({ length: GRID_WIDTH * GRID_HEIGHT }).map((_, i) => (
+                <div key={i} className="border border-white/10 bg-[#2a3441]/50" />
+              ))}
+            </div>
+
+            {/* Current Player */}
+            <div
+              className="absolute transition-all duration-150 z-10"
+              style={{
+                transform: `translate(${currentPlayer.x * CELL_SIZE}px, ${currentPlayer.y * CELL_SIZE}px)`,
+                width: CELL_SIZE,
+                height: CELL_SIZE,
+              }}
+            >
+              <PlayerAvatar
+                position={{ x: currentPlayer.x, y: currentPlayer.y }}
+                age = {user?.age || 'Unknown'}
+                gender={user?.gender || 'Unknown'}
+                username={user?.username || 'You'}
+                avatarId={user?.avatarId || 'polar-bear'}
+                cellSize={CELL_SIZE}
               />
             </div>
-          ))}
 
-          {/* Player */}
-          <PlayerAvatar
-            position={player.position}
-            direction={playerDirection}
-            username={username || 'Guest'}
-            age={String(age || 0)}  
-            gender={gender || 'Unknown'}
-            avatarId={avatarId || 'ninja'}
-            cellSize={CELL_SIZE}
-          />
-        </div>
-      </div>
-
-      {/* Chat Toggle Button */}
-      <button
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        className="absolute top-1/2 transform -translate-y-1/2 z-10 bg-[#4fd1c5] p-2 rounded-l-lg hover:bg-[#3ac7bc] transition-all duration-300"
-        style={{ right: isChatOpen ? "30%" : "5%" }}
-      >
-        {isChatOpen ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
-      </button>
-
-      {/* Chat Panel */}
-      <div
-        className={`fixed right-0 top-0 h-full bg-[#1f2937] border-l-2 border-[#374151] transition-all duration-300 ${
-          isChatOpen ? "w-[30%]" : "w-0 overflow-hidden"
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          <ChatHeader />
-
-          <div
-            ref={chatContainerRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4"
-          >
-            {messages.map((message) => (
-              <Message
-                key={message.id}
-                message={message}
-                onReactionClick={handleReactionClick}
-                showReactions={showReactions}
-                onAddReaction={handleAddReaction}
-              />
+            {/* Other Players */}
+            {Array.from(players.entries()).map(([userId, player]) => (
+              <div
+                key={userId}
+                className="absolute transition-all duration-150"
+                style={{
+                  transform: `translate(${player.x * CELL_SIZE}px, ${player.y * CELL_SIZE}px)`,
+                  width: CELL_SIZE,
+                  height: CELL_SIZE,
+                }}
+              >
+                <PlayerAvatar
+                  position={{ x: player.x, y: player.y }}
+                  age={player?.age || 'Unknown'}
+                  gender={player?.gender || 'Unknown'}
+                  username={player.username}
+                  avatarId={player.avatarId}
+                  cellSize={CELL_SIZE}
+                />
+              </div>
             ))}
-
-            <TypingIndicator typingUsers={typingUsers} />
           </div>
+        </div>
 
-          <MessageInput
-            newMessage={newMessage}
-            onMessageChange={handleTyping}
-            onSendMessage={handleSendMessage}
-            onFileUpload={handleFileUpload}
-          />
+        {/* UI Controls */}
+        <div className="absolute top-4 right-4 space-x-2">
+          <Button
+            className="bg-[#4fd1c5] hover:bg-[#3ac7bc] text-white"
+            onClick={() => setIsPlayerListOpen(!isPlayerListOpen)}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Players ({players.size + 1})
+          </Button>
+
+          <Button
+            className="bg-[#4fd1c5] hover:bg-[#3ac7bc] text-white"
+            onClick={handleLeaveRoom}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Leave Room
+          </Button>
+        </div>
+
+        {/* Players List Modal */}
+        {isPlayerListOpen && (
+          <div className="absolute top-16 right-4 bg-[#2a3441] rounded-xl p-4 shadow-lg w-64">
+            <h3 className="text-white font-bold mb-4 font-['Comic_Sans_MS']">Players in Room</h3>
+            <div className="space-y-2">
+              <div className="text-[#4fd1c5] font-['Comic_Sans_MS']">
+                • You ({user?.username})
+              </div>
+              {Array.from(players.entries()).map(([userId, player]) => (
+                <div key={userId} className="text-white font-['Comic_Sans_MS']">
+                  • {player.username}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Chat Toggle Button */}
+        <button
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className="absolute top-1/2 -translate-y-1/2 z-10 p-2 bg-[#4fd1c5] hover:bg-[#3ac7bc] text-white transition-all duration-300 rounded-l-lg"
+          style={{ right: isChatOpen ? '30%' : 0 }}
+        >
+          {isChatOpen ? <ChevronRight /> : <ChevronLeft />}
+        </button>
+
+        {/* Chat Panel */}
+        <div
+          className={`fixed right-0 top-0 h-full bg-[#2a3441] border-l-2 border-[#374151] transition-all duration-300 ${
+            isChatOpen ? 'w-[30%]' : 'w-0 overflow-hidden'
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            <ChatHeader />
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((message: any) => (
+                <Message
+                  key={message.id}
+                  message={message}
+                  onReactionClick={handleReactionClick}
+                  showReactions={showReactions}
+                  onAddReaction={handleAddReaction}
+                />
+              ))}
+
+              <TypingIndicator typingUsers={typingUsers} />
+            </div>
+
+            <MessageInput
+              newMessage={newMessage}
+              onMessageChange={handleTyping}
+              onSendMessage={handleSendMessage}
+              onFileUpload={handleFileUpload}
+            />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  };
+
+  export default Room;
