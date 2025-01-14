@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@repo/ui/Button";
 import { InputBox } from "@repo/ui/InpuBox";
@@ -8,6 +8,7 @@ import { CreateRoomModalProps, Map, RoomData } from "../interfaces";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { useRecoilState } from "recoil";
 import { selectedRoomState } from "../store/atoms/room";
+import { useUserContext} from "../contexts/UserContext";
 
 const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   onCreateRoom,
@@ -17,6 +18,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const { sendMessage, addMessageHandler, removeMessageHandler } =
     useWebSocket();
   const [showMapSelection, setShowMapSelection] = useState(false);
+  const { user } = useUserContext();
 
   useEffect(() => {
     const handleMessage = (message: any) => {
@@ -52,13 +54,13 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     },
   ];
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!selectedRoom?.name || !selectedRoom?.mapId) {
       console.log("Please select a room name and map");
       return;
     }
 
-    sendMessage({
+    await sendMessage({
       type: "create-room",
       payload: {
         name: selectedRoom?.name,
@@ -67,6 +69,15 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         thumbnailUrl: selectedRoom?.thumbnailUrl,
       },
     });
+
+    sendMessage({
+      type: "join",
+      payload: {
+        roomId: selectedRoom?.mapId,
+        avatarId: user?.avatarId,
+        username: user?.username
+      }
+    })
   };
 
   const getSelectedMap = () => {

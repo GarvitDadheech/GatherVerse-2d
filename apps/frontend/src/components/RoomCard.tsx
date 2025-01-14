@@ -16,7 +16,7 @@ export const RoomCard: React.FC<{ room: Room }> = ({ room }) => {
   useEffect(() => {
     const handleMessage = (message: any) => {
       switch (message.type) {
-        case "space-joined":
+        case "room-joined":
           const joinResponse = message;
           setIsJoining(false);
           navigate(`/room/${room.roomId}`, {

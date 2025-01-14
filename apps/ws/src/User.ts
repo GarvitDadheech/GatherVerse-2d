@@ -10,6 +10,8 @@ export class User {
     private x: number = 0;
     private y: number = 0;
     private ws: WebSocket;
+    private avatarId: string = "polar-bear";
+    private username: string = "Anonymous";
 
     constructor(ws: WebSocket) {
         this.ws = ws;
@@ -31,7 +33,8 @@ export class User {
             switch (parsedData.type) {
                 case "create-room":
                     try {
-                        const roomId = RoomManager.getInstance().createRoom();
+                        const { name, description, mapId, thumbnailUrl } = parsedData.payload;
+                        const roomId = RoomManager.getInstance().createRoom(name, description, mapId, thumbnailUrl);
                         this.send({
                             type: "room-created",
                             payload: { roomId }
@@ -61,20 +64,25 @@ export class User {
                 case "join":
                     try {
                         const roomId = parsedData.payload.roomId;
-
+                        const room = RoomManager.getInstance().getRoomDetails(roomId);
+                        this.avatarId = parsedData.payload.avatarId;
+                        this.username = parsedData.payload.username;
                         const spawnPosition = await getSpawnPosition();
                         this.x = spawnPosition.x;
                         this.y = spawnPosition.y;
                         this.roomId = roomId;
                         RoomManager.getInstance().addUser(roomId, this);
+                        const otherUsers = room?.users.filter(user => user.userId !== this.userId);
                         this.send({
-                            type: "space-joined",
+                            type: "room-joined",
                             payload: {
-                                users : RoomManager.getInstance().rooms.get(roomId)?.map((u) => ({userId : u.userId})) || [],
-                                spawn : {
-                                    x : this.x,
-                                    y : this.y
-                                }
+                                users: otherUsers,
+                                spawn: {
+                                    x: this.x,
+                                    y: this.y
+                                },
+                                username : this.username,
+                                avatarId : this.avatarId
                             }
                         })
                         RoomManager.getInstance().broadcast({
@@ -82,7 +90,9 @@ export class User {
                             payload: {
                                 userId : this.userId,
                                 x : this.x,
-                                y : this.y
+                                y : this.y,
+                                avatarId : this.avatarId,
+                                username: this.username
                             }
                         },this,this.roomId!);
                     }
@@ -98,32 +108,19 @@ export class User {
                         break
                     }
                 case "move":
-                    const moveX = parsedData.payload.x;
-                    const moveY = parsedData.payload.y;
-
-                    const xDisplacement = Math.abs(moveX-this.x);
-                    const yDisplacement = Math.abs(moveY-this.y);
-
-                    if((xDisplacement===1 && yDisplacement===0) || (xDisplacement===0 && yDisplacement===1)) {
-                        this.x = moveX;
-                        this.y = moveY;
-                        RoomManager.getInstance().broadcast({
-                            type: "move",
-                            payload: {
-                                userId : this.userId,
-                                x : this.x,
-                                y : this.y
-                            }
-                        },this,this.roomId!);
-                        return;
-                    }
-                    this.send({
-                        type: "movement-rejected",
+                    const newX = parsedData.payload.x;
+                    const newY = parsedData.payload.y;
+                    this.x = newX;
+                    this.y = newY;
+                    RoomManager.getInstance().broadcast({
+                        type: "move",
                         payload: {
+                            userId : this.userId,
                             x : this.x,
                             y : this.y
                         }
-                    })
+                    },this,this.roomId!);
+                    return;
                     break;
                 default:
                     console.log(`Received unknown message: ${parsedData}`);
