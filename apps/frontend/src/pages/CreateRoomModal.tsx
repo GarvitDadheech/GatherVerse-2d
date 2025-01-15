@@ -9,24 +9,52 @@ import { useWebSocket } from "../hooks/useWebSocket";
 import { useRecoilState } from "recoil";
 import { selectedRoomState } from "../store/atoms/room";
 import { useUserContext} from "../contexts/UserContext";
+import { useNavigate } from "react-router-dom";
 
 const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   onCreateRoom,
   onBack,
 }) => {
   const [selectedRoom, setSelectedRoom] = useRecoilState(selectedRoomState);
+  const navigate = useNavigate();
   const { sendMessage, addMessageHandler, removeMessageHandler } =
     useWebSocket();
   const [showMapSelection, setShowMapSelection] = useState(false);
   const { user } = useUserContext();
 
   useEffect(() => {
+    console.log("hii")
     const handleMessage = (message: any) => {
+      console.log("WebSocket message:", message);
       switch (message.type) {
         case "room-created":
-          onCreateRoom({
-            roomId: message.payload.roomId,
-            ...selectedRoom!,
+          const newRoomId = message.payload.roomId;
+          const roomDetails = {
+            roomId: newRoomId,
+            mapId: message.payload.mapId,
+            name: message.payload.name,
+            description: message.payload.description,
+            thumbnailUrl: message.payload.thumbnailUrl,
+          };
+
+          sendMessage({
+            type: "join",
+            payload: {
+              roomId: newRoomId,
+              avatarId: user?.avatarId,
+              username: user?.username
+            }
+          });
+          
+          console.log("roomDetails", roomDetails);
+          
+          // Call onCreateRoom callback
+          onCreateRoom(roomDetails);
+          navigate(`/room/${roomDetails.roomId}`, {
+            state: {
+              spawnPosition: { x: 0, y: 0 },
+              users: [],
+            }
           });
           break;
         case "error":
@@ -59,8 +87,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       console.log("Please select a room name and map");
       return;
     }
-
-    await sendMessage({
+    sendMessage({
       type: "create-room",
       payload: {
         name: selectedRoom?.name,
@@ -69,15 +96,6 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         thumbnailUrl: selectedRoom?.thumbnailUrl,
       },
     });
-
-    sendMessage({
-      type: "join",
-      payload: {
-        roomId: selectedRoom?.mapId,
-        avatarId: user?.avatarId,
-        username: user?.username
-      }
-    })
   };
 
   const getSelectedMap = () => {

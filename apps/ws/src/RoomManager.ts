@@ -23,7 +23,7 @@ export class RoomManager {
         return this.instance;
     }
 
-    public createRoom(name: string = "Default Room", description: string = "", mapId: string = "default", thumbnailUrl: string = ""): RoomDetails {
+    public createRoom(name: string = "Default Room", description: string = "", mapId: string = "default", thumbnailUrl: string = ""): string {
         const roomId = generateCustomId();
         const room: RoomDetails = {
             roomId,
@@ -34,7 +34,7 @@ export class RoomManager {
             users: []
         };
         this.rooms.set(roomId, room);
-        return room;
+        return roomId;
     }
 
     public addUser(roomId: string, user: User): void {

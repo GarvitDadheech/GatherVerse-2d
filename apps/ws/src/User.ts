@@ -37,7 +37,7 @@ export class User {
                         const roomId = RoomManager.getInstance().createRoom(name, description, mapId, thumbnailUrl);
                         this.send({
                             type: "room-created",
-                            payload: { roomId }
+                            payload: { roomId,name, description,mapId, thumbnailUrl }
                         });
                     } catch (e) {
                         this.send({

@@ -1,16 +1,22 @@
-import {WS_URL} from '@repo/config';
 import { useRecoilState, useSetRecoilState } from 'recoil';
 import { wsConnectedState, wsInstanceState, wsMessageHandlerState } from '../store/atoms/websocketAtom';
 import { WsMessage } from '../interfaces';
+import { useCallback, useEffect, useRef } from 'react';
 
-const WEBSOCKET_URL = `ws://${WS_URL}`;
+const WEBSOCKET_URL = `ws://localhost:3001`;
 
 export const useWebSocket = () => {
-    const [ws,setWs] = useRecoilState(wsInstanceState);
+    const [ws, setWs] = useRecoilState(wsInstanceState);
     const setConnected = useSetRecoilState(wsConnectedState);
-    const [messageHandlerState, setMessageHandlerState] = useRecoilState(wsMessageHandlerState);
+    const [messageHandlers, setMessageHandlers] = useRecoilState(wsMessageHandlerState);
+    const handlersRef = useRef(messageHandlers);
 
-    const connect = () => {
+    // Update ref when handlers change
+    useEffect(() => {
+        handlersRef.current = messageHandlers;
+    }, [messageHandlers]);
+
+    const connect = useCallback(() => {
         if(ws?.readyState === WebSocket.OPEN) {
             console.log('WebSocket already connected');
             return;
@@ -24,8 +30,22 @@ export const useWebSocket = () => {
         }
 
         newWs.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            messageHandlerState.forEach((handler) => handler(message));
+            try {
+                const message = JSON.parse(event.data);
+                console.log("Received message:", message);
+                console.log("Current handlers:", handlersRef.current);
+                
+                // Use the ref instead of the state directly
+                handlersRef.current.forEach(handler => {
+                    try {
+                        handler(message);
+                    } catch (error) {
+                        console.error("Error in message handler:", error);
+                    }
+                });
+            } catch (error) {
+                console.error("Error parsing WebSocket message:", error);
+            }
         }
 
         newWs.onclose = () => {
@@ -36,9 +56,9 @@ export const useWebSocket = () => {
         }
 
         setWs(newWs);
-    }
+    }, [ws, setConnected, setWs]);
 
-    const disconnect = () => {
+    const disconnect = useCallback(() => {
         if(ws?.readyState === WebSocket.CLOSED) {
             console.log('WebSocket already disconnected');
             return;
@@ -46,23 +66,28 @@ export const useWebSocket = () => {
         ws?.close();
         setWs(null);
         setConnected(false);
-    }
+    }, [ws, setWs, setConnected]);
 
-    const sendMessage = (message: WsMessage) => {
+    const sendMessage = useCallback((message: WsMessage) => {
         if (ws?.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify(message));
+            ws.send(JSON.stringify(message));
         } else {
-          console.error('WebSocket is not connected');
+            console.error('WebSocket is not connected');
         }
-    };
+    }, [ws]);
 
-    const addMessageHandler = (handler: (message: WsMessage) => void) => {
-        setMessageHandlerState(prev => [...prev, handler]);
-    };
+    const addMessageHandler = useCallback((handler: (message: WsMessage) => void) => {
+        console.log("Adding handler:", handler);
+        setMessageHandlers(prev => {
+            const newHandlers = [...prev, handler];
+            console.log("Updated handlers:", newHandlers);
+            return newHandlers;
+        });
+    }, [setMessageHandlers]);
 
-    const removeMessageHandler = (handler: (message: WsMessage) => void) => {
-        setMessageHandlerState(prev => prev.filter(h => h !== handler));
-    };
+    const removeMessageHandler = useCallback((handler: (message: WsMessage) => void) => {
+        setMessageHandlers(prev => prev.filter(h => h !== handler));
+    }, [setMessageHandlers]);
 
     return {
         connect,

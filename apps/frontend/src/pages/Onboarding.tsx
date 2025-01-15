@@ -79,6 +79,7 @@ const UserOnboarding = () => {
               avatarId: selectedAvatar?.id || "",
               roomId: roomDetails.roomId,
             });
+            console.log("roomDetails", roomDetails);
             navigate(`/room/${roomDetails.roomId}`, {
               state: {
                 spawnPosition: { x: 0, y: 0 },

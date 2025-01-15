@@ -33,6 +33,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     > 
+      <div className="text-4xl select-none">{avatar.emoji}</div>
       {showTooltip && (
         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-[#2d3748] border-2 border-[#4fd1c5] rounded-lg p-3 shadow-lg z-50 min-w-[150px]">
           <div className="text-center">
